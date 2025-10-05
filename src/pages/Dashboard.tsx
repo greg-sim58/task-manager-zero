@@ -1,9 +1,40 @@
+import { useEffect, useState } from "react";
 import { KPICard } from "@/components/KPICard";
 import { RecentActivity } from "@/components/RecentActivity";
 import { QuickActions } from "@/components/QuickActions";
-import { TrendingUp, Users, ShoppingCart, Percent } from "lucide-react";
+import { CheckSquare, Users, ShoppingCart, Percent } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Dashboard() {
+  const [taskStats, setTaskStats] = useState({
+    pending: 0,
+    inProgress: 0,
+    completed: 0,
+    percentIncomplete: 0,
+  });
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const fetchTasks = async () => {
+    const { data: tasks } = await supabase
+      .from("tasks")
+      .select("status");
+
+    if (tasks) {
+      const pending = tasks.filter((t) => t.status === "pending").length;
+      const inProgress = tasks.filter((t) => t.status === "in_progress").length;
+      const completed = tasks.filter((t) => t.status === "completed").length;
+      const total = tasks.length;
+      const percentIncomplete = total > 0 
+        ? Math.round(((pending + inProgress) / total) * 100) 
+        : 0;
+
+      setTaskStats({ pending, inProgress, completed, percentIncomplete });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -12,10 +43,10 @@ export default function Dashboard() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KPICard
-          title="Total Revenue"
-          value="$45,231"
-          change="+12.5% from last month"
-          icon={<TrendingUp className="h-5 w-5" />}
+          title="Tasks"
+          value={`${taskStats.percentIncomplete}%`}
+          change={`${taskStats.pending} pending, ${taskStats.inProgress} in progress, ${taskStats.completed} completed`}
+          icon={<CheckSquare className="h-5 w-5" />}
           variant="revenue"
         />
         <KPICard
