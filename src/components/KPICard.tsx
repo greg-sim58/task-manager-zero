@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 interface KPICardProps {
   title: string;
   value: string;
-  change: string;
+  change: string | ReactNode;
   icon: ReactNode;
   variant: "revenue" | "users" | "orders" | "conversion";
 }
@@ -18,8 +18,9 @@ const variantStyles = {
 };
 
 export function KPICard({ title, value, change, icon, variant }: KPICardProps) {
-  const isPositive = change.startsWith("+");
-  const isNegative = change.startsWith("-");
+  const isString = typeof change === "string";
+  const isPositive = isString && change.startsWith("+");
+  const isNegative = isString && change.startsWith("-");
 
   return (
     <Card className="transition-all hover:shadow-md">
@@ -28,16 +29,20 @@ export function KPICard({ title, value, change, icon, variant }: KPICardProps) {
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">{title}</p>
             <p className="text-3xl font-bold">{value}</p>
-            <p
-              className={cn(
-                "text-sm font-medium",
-                isPositive && "text-[hsl(var(--success))]",
-                isNegative && "text-[hsl(var(--danger))]",
-                !isPositive && !isNegative && "text-muted-foreground"
-              )}
-            >
-              {change}
-            </p>
+            {isString ? (
+              <p
+                className={cn(
+                  "text-sm font-medium",
+                  isPositive && "text-[hsl(var(--success))]",
+                  isNegative && "text-[hsl(var(--danger))]",
+                  !isPositive && !isNegative && "text-muted-foreground"
+                )}
+              >
+                {change}
+              </p>
+            ) : (
+              <div className="text-sm font-medium">{change}</div>
+            )}
           </div>
           <div className={cn("rounded-full p-3", variantStyles[variant])}>
             {icon}

@@ -45,7 +45,13 @@ export default function Dashboard() {
         <KPICard
           title="Tasks"
           value={`${taskStats.percentIncomplete}%`}
-          change={`${taskStats.pending} pending, ${taskStats.inProgress} in progress, ${taskStats.completed} completed`}
+          change={
+            <div className="space-y-1">
+              <div className="text-[hsl(var(--warning))]">{taskStats.pending} pending</div>
+              <div className="text-[hsl(var(--primary))]">{taskStats.inProgress} in progress</div>
+              <div className="text-[hsl(var(--success))]">{taskStats.completed} completed</div>
+            </div>
+          }
           icon={<CheckSquare className="h-5 w-5" />}
           variant="revenue"
         />
