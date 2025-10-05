@@ -28,7 +28,7 @@ import { toast } from "@/hooks/use-toast";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Analytics", url: "/analytics", icon: BarChart3 },
+  { title: "Tasks", url: "/tasks", icon: BarChart3 },
   { title: "Reports", url: "/reports", icon: FileText },
   { title: "Settings", url: "/settings", icon: Settings },
   { title: "Users", url: "/users", icon: Users },
