@@ -7,22 +7,11 @@ import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-//import { useTheme } from "@/lib/theme-context"
 import { useToast } from "@/hooks/use-toast"
-import { cn } from "@/lib/utils"
-
-const accentColors = [
-  { name: "blue", color: "bg-blue-600" },
-  { name: "pink", color: "bg-pink-600" },
-  { name: "orange", color: "bg-orange-600" },
-  { name: "green", color: "bg-green-600" },
-  { name: "black", color: "bg-black" },
-  { name: "white", color: "bg-white border border-gray-300" },
-]
 
 export default function SettingsPage() {
-  const { theme, accentColor, toggleTheme, setAccentColor } = useTheme()
   const { toast } = useToast()
+  const [darkMode, setDarkMode] = useState(false)
   const [notifications, setNotifications] = useState({
     all: false,
     system: true,
@@ -112,27 +101,7 @@ export default function SettingsPage() {
                   <Label>Dark Mode</Label>
                   <p className="text-sm text-muted-foreground">Toggle the application's theme.</p>
                 </div>
-                <Switch checked={theme === "dark"} onCheckedChange={toggleTheme} />
-              </div>
-
-              <div className="space-y-3">
-                <Label>Accent Color</Label>
-                <p className="text-sm text-muted-foreground">Choose your preferred accent color for the sidebar.</p>
-                <div className="flex gap-3">
-                  {accentColors.map((color) => (
-                    <button
-                      key={color.name}
-                      onClick={() => setAccentColor(color.name as any)}
-                      className={cn(
-                        "h-10 w-10 rounded-full transition-all hover:scale-110",
-                        color.color,
-                        accentColor === color.name &&
-                          "ring-2 ring-offset-2 ring-offset-background ring-foreground scale-110",
-                      )}
-                      aria-label={`Select ${color.name} accent color`}
-                    />
-                  ))}
-                </div>
+                <Switch checked={darkMode} onCheckedChange={setDarkMode} />
               </div>
             </CardContent>
           </Card>
@@ -206,7 +175,7 @@ export default function SettingsPage() {
 
       <div className="flex justify-end gap-3">
         <Button variant="outline">Cancel</Button>
-        <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={handleSave}>
           Save Changes
         </Button>
       </div>
