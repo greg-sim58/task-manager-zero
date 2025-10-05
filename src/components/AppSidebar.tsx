@@ -1,7 +1,7 @@
 import { 
   LayoutDashboard, 
   BarChart3, 
-  FileText, 
+  Wrench, 
   Settings, 
   Users, 
   Package,
@@ -29,7 +29,7 @@ import { toast } from "@/hooks/use-toast";
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Tasks", url: "/tasks", icon: BarChart3 },
-  { title: "Reports", url: "/reports", icon: FileText },
+  { title: "Tools", url: "/reports", icon: Wrench },
   { title: "Settings", url: "/settings", icon: Settings },
   { title: "Users", url: "/users", icon: Users },
   { title: "Products", url: "/products", icon: Package },
