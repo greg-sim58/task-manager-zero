@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
+import { useTheme } from "next-themes"
 
 export default function SettingsPage() {
   const { toast } = useToast()
-  const [darkMode, setDarkMode] = useState(false)
+  const { theme, setTheme } = useTheme()
   const [notifications, setNotifications] = useState({
     all: false,
     system: true,
@@ -101,7 +102,10 @@ export default function SettingsPage() {
                   <Label>Dark Mode</Label>
                   <p className="text-sm text-muted-foreground">Toggle the application's theme.</p>
                 </div>
-                <Switch checked={darkMode} onCheckedChange={setDarkMode} />
+                <Switch 
+                  checked={theme === "dark"} 
+                  onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")} 
+                />
               </div>
             </CardContent>
           </Card>
