@@ -3,7 +3,15 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import { DashboardLayout } from "./components/DashboardLayout";
+import Dashboard from "./pages/Dashboard";
+import Analytics from "./pages/Analytics";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
+import Users from "./pages/Users";
+import Products from "./pages/Products";
+import Support from "./pages/Support";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -15,8 +23,63 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/auth" element={<Auth />} />
+          <Route
+            path="/"
+            element={
+              <DashboardLayout>
+                <Dashboard />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <DashboardLayout>
+                <Analytics />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <DashboardLayout>
+                <Reports />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <DashboardLayout>
+                <Settings />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <DashboardLayout>
+                <Users />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/products"
+            element={
+              <DashboardLayout>
+                <Products />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/support"
+            element={
+              <DashboardLayout>
+                <Support />
+              </DashboardLayout>
+            }
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
