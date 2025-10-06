@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, addDays, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Event {
   id: string;
@@ -16,6 +18,8 @@ interface Event {
   description: string;
   date: Date;
   time: string;
+  duration: number;
+  category: string;
   color: string;
 }
 
@@ -31,30 +35,128 @@ const EVENT_COLORS = [
   "bg-pink-500",
 ];
 
+const CATEGORIES = [
+  "Work",
+  "Personal",
+  "Meeting",
+  "Health",
+  "Other",
+];
+
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [viewType, setViewType] = useState<ViewType>("month");
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [events, setEvents] = useState<Event[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newEvent, setNewEvent] = useState({ title: "", description: "", time: "12:00" });
+  const [newEvent, setNewEvent] = useState({ 
+    title: "", 
+    description: "", 
+    time: "12:00", 
+    duration: 60,
+    category: "Work" 
+  });
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const handleAddEvent = () => {
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  const loadEvents = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to view your events",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+
+      const formattedEvents = data?.map(event => ({
+        ...event,
+        date: new Date(event.date),
+      })) || [];
+
+      setEvents(formattedEvents);
+    } catch (error) {
+      console.error('Error loading events:', error);
+      toast({
+        title: "Error loading events",
+        description: "Failed to load your events. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddEvent = async () => {
     if (!selectedDate || !newEvent.title) return;
 
-    const event: Event = {
-      id: Date.now().toString(),
-      title: newEvent.title,
-      description: newEvent.description,
-      date: selectedDate,
-      time: newEvent.time,
-      color: EVENT_COLORS[events.length % EVENT_COLORS.length],
-    };
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to add events",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    setEvents([...events, event]);
-    setNewEvent({ title: "", description: "", time: "12:00" });
-    setIsDialogOpen(false);
+      const eventData = {
+        user_id: user.id,
+        title: newEvent.title,
+        description: newEvent.description,
+        date: selectedDate.toISOString(),
+        time: newEvent.time,
+        duration: newEvent.duration,
+        category: newEvent.category,
+        color: EVENT_COLORS[events.length % EVENT_COLORS.length],
+      };
+
+      const { data, error } = await supabase
+        .from('events')
+        .insert([eventData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newEventObj: Event = {
+        ...data,
+        date: new Date(data.date),
+      };
+
+      setEvents([...events, newEventObj]);
+      setNewEvent({ title: "", description: "", time: "12:00", duration: 60, category: "Work" });
+      setIsDialogOpen(false);
+      
+      toast({
+        title: "Event created",
+        description: "Your event has been added successfully",
+      });
+    } catch (error) {
+      console.error('Error adding event:', error);
+      toast({
+        title: "Error creating event",
+        description: "Failed to create your event. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handlePrevious = () => {
@@ -373,14 +475,45 @@ export default function Calendar() {
                     onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
                   />
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="time">Time</Label>
+                    <Input
+                      id="time"
+                      type="time"
+                      value={newEvent.time}
+                      onChange={(e) => setNewEvent({ ...newEvent, time: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="duration">Duration (minutes)</Label>
+                    <Input
+                      id="duration"
+                      type="number"
+                      min="15"
+                      step="15"
+                      value={newEvent.duration}
+                      onChange={(e) => setNewEvent({ ...newEvent, duration: parseInt(e.target.value) || 60 })}
+                    />
+                  </div>
+                </div>
                 <div className="space-y-2">
-                  <Label htmlFor="time">Time</Label>
-                  <Input
-                    id="time"
-                    type="time"
-                    value={newEvent.time}
-                    onChange={(e) => setNewEvent({ ...newEvent, time: e.target.value })}
-                  />
+                  <Label htmlFor="category">Category</Label>
+                  <Select 
+                    value={newEvent.category} 
+                    onValueChange={(value) => setNewEvent({ ...newEvent, category: value })}
+                  >
+                    <SelectTrigger id="category">
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>

@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      events: {
+        Row: {
+          category: string
+          color: string
+          created_at: string
+          date: string
+          description: string | null
+          duration: number
+          id: string
+          time: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          color: string
+          created_at?: string
+          date: string
+          description?: string | null
+          duration?: number
+          id?: string
+          time: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          color?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          duration?: number
+          id?: string
+          time?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           created_at: string
