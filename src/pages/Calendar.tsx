@@ -58,6 +58,7 @@ export default function Calendar() {
   });
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(true);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -117,46 +118,125 @@ export default function Calendar() {
         return;
       }
 
-      const eventData = {
-        user_id: user.id,
-        title: newEvent.title,
-        description: newEvent.description,
-        date: selectedDate.toISOString(),
-        time: newEvent.time,
-        duration: newEvent.duration,
-        category: newEvent.category,
-        color: EVENT_COLORS[events.length % EVENT_COLORS.length],
-      };
+      if (editingEvent) {
+        // Update existing event
+        const eventData = {
+          title: newEvent.title,
+          description: newEvent.description,
+          date: selectedDate.toISOString(),
+          time: newEvent.time,
+          duration: newEvent.duration,
+          category: newEvent.category,
+        };
 
-      const { data, error } = await supabase
-        .from('events')
-        .insert([eventData])
-        .select()
-        .single();
+        const { data, error } = await supabase
+          .from('events')
+          .update(eventData)
+          .eq('id', editingEvent.id)
+          .select()
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
 
-      const newEventObj: Event = {
-        ...data,
-        date: new Date(data.date),
-      };
+        const updatedEvent: Event = {
+          ...data,
+          date: new Date(data.date),
+        };
 
-      setEvents([...events, newEventObj]);
+        setEvents(events.map(e => e.id === editingEvent.id ? updatedEvent : e));
+        
+        toast({
+          title: "Event updated",
+          description: "Your event has been updated successfully",
+        });
+      } else {
+        // Create new event
+        const eventData = {
+          user_id: user.id,
+          title: newEvent.title,
+          description: newEvent.description,
+          date: selectedDate.toISOString(),
+          time: newEvent.time,
+          duration: newEvent.duration,
+          category: newEvent.category,
+          color: EVENT_COLORS[events.length % EVENT_COLORS.length],
+        };
+
+        const { data, error } = await supabase
+          .from('events')
+          .insert([eventData])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        const newEventObj: Event = {
+          ...data,
+          date: new Date(data.date),
+        };
+
+        setEvents([...events, newEventObj]);
+        
+        toast({
+          title: "Event created",
+          description: "Your event has been added successfully",
+        });
+      }
+
       setNewEvent({ title: "", description: "", time: "12:00", duration: 60, category: "Work" });
+      setEditingEvent(null);
       setIsDialogOpen(false);
-      
-      toast({
-        title: "Event created",
-        description: "Your event has been added successfully",
-      });
     } catch (error) {
-      console.error('Error adding event:', error);
+      console.error('Error saving event:', error);
       toast({
-        title: "Error creating event",
-        description: "Failed to create your event. Please try again.",
+        title: editingEvent ? "Error updating event" : "Error creating event",
+        description: "Failed to save your event. Please try again.",
         variant: "destructive",
       });
     }
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!editingEvent) return;
+
+    try {
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', editingEvent.id);
+
+      if (error) throw error;
+
+      setEvents(events.filter(e => e.id !== editingEvent.id));
+      setNewEvent({ title: "", description: "", time: "12:00", duration: 60, category: "Work" });
+      setEditingEvent(null);
+      setIsDialogOpen(false);
+      
+      toast({
+        title: "Event deleted",
+        description: "Your event has been deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast({
+        title: "Error deleting event",
+        description: "Failed to delete your event. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditEvent = (event: Event) => {
+    setEditingEvent(event);
+    setSelectedDate(event.date);
+    setNewEvent({
+      title: event.title,
+      description: event.description || "",
+      time: event.time,
+      duration: event.duration,
+      category: event.category,
+    });
+    setIsDialogOpen(true);
   };
 
   const handlePrevious = () => {
@@ -249,8 +329,11 @@ export default function Calendar() {
                   {visibleEvents.map((event) => (
                     <div
                       key={event.id}
-                      className="text-xs p-1 rounded flex items-center gap-1 hover:opacity-80 transition-opacity"
-                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs p-1 rounded flex items-center gap-1 hover:opacity-80 transition-opacity cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditEvent(event);
+                      }}
                     >
                       <div className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", event.color)} />
                       <span className="truncate font-medium">{event.title}</span>
@@ -318,8 +401,12 @@ export default function Calendar() {
                       .map((event) => (
                         <div
                           key={event.id}
-                          className="text-xs p-1 rounded flex items-center gap-1 mb-1"
+                          className="text-xs p-1 rounded flex items-center gap-1 mb-1 cursor-pointer hover:opacity-80"
                           style={{ backgroundColor: `var(--${event.color.split("-")[1]}-500)` }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditEvent(event);
+                          }}
                         >
                           <div className={cn("w-1.5 h-1.5 rounded-full bg-white flex-shrink-0")} />
                           <span className="truncate font-medium text-white">{event.title}</span>
@@ -370,8 +457,12 @@ export default function Calendar() {
                   .map((event) => (
                     <div
                       key={event.id}
-                      className="p-2 rounded mb-2 flex items-start gap-2"
+                      className="p-2 rounded mb-2 flex items-start gap-2 cursor-pointer hover:opacity-80"
                       style={{ backgroundColor: `${event.color.replace('bg-', 'rgba(')}10` }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditEvent(event);
+                      }}
                     >
                       <div className={cn("w-2 h-2 rounded-full mt-1 flex-shrink-0", event.color)} />
                       <div className="flex-1 min-w-0">
@@ -451,7 +542,13 @@ export default function Calendar() {
             </SelectContent>
           </Select>
 
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
+              setEditingEvent(null);
+              setNewEvent({ title: "", description: "", time: "12:00", duration: 60, category: "Work" });
+            }
+          }}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4" />
@@ -460,9 +557,9 @@ export default function Calendar() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add New Event</DialogTitle>
+                <DialogTitle>{editingEvent ? "Edit Event" : "Add New Event"}</DialogTitle>
                 <DialogDescription>
-                  Create a new event for {format(selectedDate, "PPP")}
+                  {editingEvent ? "Update the event details" : `Create a new event for ${format(selectedDate, "PPP")}`}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
@@ -524,9 +621,16 @@ export default function Calendar() {
                     onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
                   />
                 </div>
-                <Button onClick={handleAddEvent} className="w-full">
-                  Create Event
-                </Button>
+                <div className="flex gap-2">
+                  {editingEvent && (
+                    <Button onClick={handleDeleteEvent} variant="destructive" className="flex-1">
+                      Delete Event
+                    </Button>
+                  )}
+                  <Button onClick={handleAddEvent} className="flex-1">
+                    {editingEvent ? "Update Event" : "Create Event"}
+                  </Button>
+                </div>
               </div>
             </DialogContent>
           </Dialog>
