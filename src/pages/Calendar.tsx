@@ -211,15 +211,15 @@ export default function Calendar() {
     const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
     return (
-      <div className="flex-1 bg-background border rounded-lg overflow-hidden">
-        <div className="grid grid-cols-7 border-b">
+      <div className="flex-1 bg-background border rounded-lg overflow-auto">
+        <div className="grid grid-cols-7 border-b sticky top-0 bg-background z-10">
           {weekDays.map((day) => (
             <div key={day} className="p-4 text-sm font-medium text-muted-foreground border-r last:border-r-0">
               {day}
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-7 auto-rows-fr" style={{ height: "calc(100vh - 320px)" }}>
+        <div className="grid grid-cols-7 auto-rows-auto">
           {days.map((day, idx) => {
             const dayEvents = getEventsForDay(day);
             const isCurrentMonth = isSameMonth(day, currentDate);
@@ -231,7 +231,7 @@ export default function Calendar() {
               <div
                 key={day.toString()}
                 className={cn(
-                  "border-r border-b last:border-r-0 p-2 overflow-hidden hover:bg-accent/50 cursor-pointer transition-colors",
+                  "border-r border-b last:border-r-0 p-2 min-h-[120px] hover:bg-accent/50 cursor-pointer transition-colors",
                   !isCurrentMonth && "bg-muted/30",
                 )}
                 onClick={() => {
