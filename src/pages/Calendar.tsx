@@ -419,7 +419,7 @@ export default function Calendar() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-muted-foreground">
+            <span className="text-sm font-bold text-muted-foreground">
               {format(currentDate, "MMM")}
             </span>
             <span className="text-xl font-bold">{format(currentDate, "d")}</span>
