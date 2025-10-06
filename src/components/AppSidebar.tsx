@@ -7,7 +7,8 @@ import {
   Package,
   HelpCircle,
   LogOut,
-  Menu
+  Menu,
+  Calendar
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
@@ -30,6 +31,7 @@ const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Tasks", url: "/tasks", icon: BarChart3 },
   { title: "Tools", url: "/reports", icon: Wrench },
+  { title: "Calendar", url: "/calendar", icon: Calendar },
   { title: "Settings", url: "/settings", icon: Settings },
   { title: "Users", url: "/users", icon: Users },
   { title: "Products", url: "/products", icon: Package },

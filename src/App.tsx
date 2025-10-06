@@ -8,6 +8,7 @@ import { DashboardLayout } from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
 import Reports from "./pages/Reports";
+import Calendar from "./pages/Calendar";
 import Settings from "./pages/Settings";
 import Users from "./pages/Users";
 import Products from "./pages/Products";
@@ -47,6 +48,14 @@ const App = () => (
             element={
               <DashboardLayout>
                 <Reports />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              <DashboardLayout>
+                <Calendar />
               </DashboardLayout>
             }
           />
