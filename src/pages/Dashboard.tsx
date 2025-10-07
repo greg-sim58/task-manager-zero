@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { KPICard } from "@/components/KPICard";
 import { RecentActivity } from "@/components/RecentActivity";
 import { QuickActions } from "@/components/QuickActions";
-import { CheckSquare, Users, ShoppingCart, Percent } from "lucide-react";
+import { CheckSquare, Calendar as CalendarIcon, ShoppingCart, Percent } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 export default function Dashboard() {
   const [taskStats, setTaskStats] = useState({
@@ -12,9 +13,11 @@ export default function Dashboard() {
     completed: 0,
     percentIncomplete: 0,
   });
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
 
   useEffect(() => {
     fetchTasks();
+    fetchUpcomingEvents();
   }, []);
 
   const fetchTasks = async () => {
@@ -32,6 +35,23 @@ export default function Dashboard() {
         : 0;
 
       setTaskStats({ pending, inProgress, completed, percentIncomplete });
+    }
+  };
+
+  const fetchUpcomingEvents = async () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const { data: events } = await supabase
+      .from("events")
+      .select("title, date, time")
+      .gte("date", today.toISOString())
+      .order("date", { ascending: true })
+      .order("time", { ascending: true })
+      .limit(3);
+
+    if (events) {
+      setUpcomingEvents(events);
     }
   };
 
@@ -56,10 +76,22 @@ export default function Dashboard() {
           variant="revenue"
         />
         <KPICard
-          title="Active Users"
-          value="2,345"
-          change="+8.2% from last month"
-          icon={<Users className="h-5 w-5" />}
+          title="Events"
+          value={`${upcomingEvents.length}`}
+          change={
+            upcomingEvents.length > 0 ? (
+              <div className="space-y-1">
+                {upcomingEvents.map((event, idx) => (
+                  <div key={idx} className="text-xs">
+                    {event.title} - {format(new Date(event.date), "MMM d")} at {event.time}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              "No upcoming events"
+            )
+          }
+          icon={<CalendarIcon className="h-5 w-5" />}
           variant="users"
         />
         <KPICard
