@@ -23,6 +23,12 @@ export type Database = {
           description: string | null
           duration: number
           id: string
+          is_recurring: boolean | null
+          parent_event_id: string | null
+          recurrence_days_of_week: string[] | null
+          recurrence_end_date: string | null
+          recurrence_frequency: string | null
+          recurrence_interval: number | null
           time: string
           title: string
           updated_at: string
@@ -36,6 +42,12 @@ export type Database = {
           description?: string | null
           duration?: number
           id?: string
+          is_recurring?: boolean | null
+          parent_event_id?: string | null
+          recurrence_days_of_week?: string[] | null
+          recurrence_end_date?: string | null
+          recurrence_frequency?: string | null
+          recurrence_interval?: number | null
           time: string
           title: string
           updated_at?: string
@@ -49,12 +61,26 @@ export type Database = {
           description?: string | null
           duration?: number
           id?: string
+          is_recurring?: boolean | null
+          parent_event_id?: string | null
+          recurrence_days_of_week?: string[] | null
+          recurrence_end_date?: string | null
+          recurrence_frequency?: string | null
+          recurrence_interval?: number | null
           time?: string
           title?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "events_parent_event_id_fkey"
+            columns: ["parent_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {

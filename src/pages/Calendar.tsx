@@ -3,14 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, addDays, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import RecurringEventDialog from "@/components/RecurringEventDialog";
 
 interface Event {
   id: string;
@@ -59,6 +61,9 @@ export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(true);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [isRecurringDialogOpen, setIsRecurringDialogOpen] = useState(false);
+  const [recurringOptions, setRecurringOptions] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -106,6 +111,12 @@ export default function Calendar() {
   const handleAddEvent = async () => {
     if (!selectedDate || !newEvent.title) return;
 
+    // If recurring is checked but options not set, open recurring dialog
+    if (isRecurring && !recurringOptions) {
+      setIsRecurringDialogOpen(true);
+      return;
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -149,8 +160,69 @@ export default function Calendar() {
           title: "Event updated",
           description: "Your event has been updated successfully",
         });
+      } else if (isRecurring && recurringOptions) {
+        // Create recurring events
+        const eventsToCreate = [];
+        const color = EVENT_COLORS[events.length % EVENT_COLORS.length];
+        let currentDate = new Date(selectedDate);
+        const endDate = recurringOptions.endDate || addMonths(selectedDate, 12); // Default to 1 year if no end date
+        
+        while (currentDate <= endDate) {
+          // Check if this day should be included (for weekly recurrence)
+          const shouldInclude = recurringOptions.frequency !== 'week' || 
+            recurringOptions.daysOfWeek.length === 0 ||
+            recurringOptions.daysOfWeek.includes(format(currentDate, 'EEEE').toLowerCase());
+
+          if (shouldInclude) {
+            eventsToCreate.push({
+              user_id: user.id,
+              title: newEvent.title,
+              description: newEvent.description,
+              date: currentDate.toISOString(),
+              time: newEvent.time,
+              duration: newEvent.duration,
+              category: newEvent.category,
+              color: color,
+              is_recurring: true,
+              recurrence_frequency: recurringOptions.frequency,
+              recurrence_interval: recurringOptions.interval,
+              recurrence_days_of_week: recurringOptions.daysOfWeek,
+              recurrence_end_date: recurringOptions.endDate?.toISOString(),
+            });
+          }
+
+          // Increment date based on frequency
+          if (recurringOptions.frequency === 'day') {
+            currentDate = addDays(currentDate, recurringOptions.interval);
+          } else if (recurringOptions.frequency === 'week') {
+            currentDate = addDays(currentDate, 7 * recurringOptions.interval);
+          } else if (recurringOptions.frequency === 'month') {
+            currentDate = addMonths(currentDate, recurringOptions.interval);
+          } else if (recurringOptions.frequency === 'year') {
+            currentDate = addMonths(currentDate, 12 * recurringOptions.interval);
+          }
+        }
+
+        const { data, error } = await supabase
+          .from('events')
+          .insert(eventsToCreate)
+          .select();
+
+        if (error) throw error;
+
+        const newEventObjs: Event[] = data.map(event => ({
+          ...event,
+          date: new Date(event.date),
+        }));
+
+        setEvents([...events, ...newEventObjs]);
+        
+        toast({
+          title: "Recurring events created",
+          description: `${newEventObjs.length} events have been added successfully`,
+        });
       } else {
-        // Create new event
+        // Create single event
         const eventData = {
           user_id: user.id,
           title: newEvent.title,
@@ -160,6 +232,7 @@ export default function Calendar() {
           duration: newEvent.duration,
           category: newEvent.category,
           color: EVENT_COLORS[events.length % EVENT_COLORS.length],
+          is_recurring: false,
         };
 
         const { data, error } = await supabase
@@ -185,6 +258,8 @@ export default function Calendar() {
 
       setNewEvent({ title: "", description: "", time: "12:00", duration: 60, category: "Work" });
       setEditingEvent(null);
+      setIsRecurring(false);
+      setRecurringOptions(null);
       setIsDialogOpen(false);
     } catch (error) {
       console.error('Error saving event:', error);
@@ -547,6 +622,8 @@ export default function Calendar() {
             if (!open) {
               setEditingEvent(null);
               setNewEvent({ title: "", description: "", time: "12:00", duration: 60, category: "Work" });
+              setIsRecurring(false);
+              setRecurringOptions(null);
             }
           }}>
             <DialogTrigger asChild>
@@ -621,21 +698,51 @@ export default function Calendar() {
                     onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
                   />
                 </div>
-                <div className="flex gap-2">
-                  {editingEvent && (
-                    <Button onClick={handleDeleteEvent} variant="destructive" className="flex-1">
-                      Delete Event
-                    </Button>
-                  )}
-                  <Button onClick={handleAddEvent} className="flex-1">
-                    {editingEvent ? "Update Event" : "Create Event"}
-                  </Button>
-                </div>
+                {!editingEvent && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="recurring" 
+                      checked={isRecurring}
+                      onCheckedChange={(checked) => {
+                        setIsRecurring(checked as boolean);
+                        if (!checked) {
+                          setRecurringOptions(null);
+                        }
+                      }}
+                    />
+                    <Label htmlFor="recurring" className="cursor-pointer">
+                      Make this a recurring event
+                    </Label>
+                  </div>
+                )}
               </div>
+              <DialogFooter className="flex gap-2">
+                {editingEvent && (
+                  <Button onClick={handleDeleteEvent} variant="destructive" className="flex-1">
+                    Delete Event
+                  </Button>
+                )}
+                <Button onClick={handleAddEvent} className="flex-1">
+                  {editingEvent ? "Update Event" : "Create Event"}
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
       </div>
+
+      {/* Recurring Event Dialog */}
+      <RecurringEventDialog
+        open={isRecurringDialogOpen}
+        onOpenChange={setIsRecurringDialogOpen}
+        startDate={selectedDate}
+        onSave={(options) => {
+          setRecurringOptions(options);
+          setIsRecurringDialogOpen(false);
+          // Automatically trigger event creation after setting recurring options
+          setTimeout(() => handleAddEvent(), 100);
+        }}
+      />
 
       {/* Calendar Views */}
       {viewType === "month" && renderMonthView()}
