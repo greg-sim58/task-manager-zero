@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import { Plus, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, addDays, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -699,21 +699,24 @@ export default function Calendar() {
                   />
                 </div>
                 {!editingEvent && (
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="recurring" 
-                      checked={isRecurring}
-                      onCheckedChange={(checked) => {
-                        setIsRecurring(checked as boolean);
-                        if (!checked) {
-                          setRecurringOptions(null);
-                        }
-                      }}
-                    />
-                    <Label htmlFor="recurring" className="cursor-pointer">
-                      Make this a recurring event
-                    </Label>
-                  </div>
+                  <Button
+                    type="button"
+                    variant={isRecurring ? "secondary" : "outline"}
+                    className="w-full"
+                    onClick={() => {
+                      if (isRecurring) {
+                        // Remove recurring options
+                        setIsRecurring(false);
+                        setRecurringOptions(null);
+                      } else {
+                        // Open recurring dialog
+                        setIsRecurring(true);
+                        setIsRecurringDialogOpen(true);
+                      }
+                    }}
+                  >
+                    {isRecurring ? "Remove recurring pattern" : "Make this a recurring event"}
+                  </Button>
                 )}
               </div>
               <DialogFooter className="flex gap-2">
