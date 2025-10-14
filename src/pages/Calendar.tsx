@@ -168,19 +168,56 @@ export default function Calendar() {
         });
       } else if (isRecurring && recurringOptions) {
         // Create recurring events
-        const eventsToCreate = [];
         const color = EVENT_COLORS[events.length % EVENT_COLORS.length];
+        
+        // First, create the parent event
+        const parentEventData = {
+          user_id: user.id,
+          title: newEvent.title,
+          description: newEvent.description,
+          date: selectedDate.toISOString(),
+          time: newEvent.time,
+          duration: newEvent.duration,
+          category: newEvent.category,
+          color: color,
+          is_recurring: true,
+          recurrence_frequency: recurringOptions.frequency,
+          recurrence_interval: recurringOptions.interval,
+          recurrence_days_of_week: recurringOptions.daysOfWeek,
+          recurrence_end_date: recurringOptions.endDate?.toISOString(),
+        };
+
+        const { data: parentEvent, error: parentError } = await supabase
+          .from('events')
+          .insert([parentEventData])
+          .select()
+          .single();
+
+        if (parentError) throw parentError;
+
+        // Now create child events
+        const childEventsToCreate = [];
         let currentDate = new Date(selectedDate);
-        const endDate = recurringOptions.endDate || addMonths(selectedDate, 12); // Default to 1 year if no end date
+        const endDate = recurringOptions.endDate || addMonths(selectedDate, 12);
+        
+        // Move to next occurrence
+        if (recurringOptions.frequency === 'day') {
+          currentDate = addDays(currentDate, recurringOptions.interval);
+        } else if (recurringOptions.frequency === 'week') {
+          currentDate = addDays(currentDate, 7 * recurringOptions.interval);
+        } else if (recurringOptions.frequency === 'month') {
+          currentDate = addMonths(currentDate, recurringOptions.interval);
+        } else if (recurringOptions.frequency === 'year') {
+          currentDate = addMonths(currentDate, 12 * recurringOptions.interval);
+        }
         
         while (currentDate <= endDate) {
-          // Check if this day should be included (for weekly recurrence)
           const shouldInclude = recurringOptions.frequency !== 'week' || 
             recurringOptions.daysOfWeek.length === 0 ||
             recurringOptions.daysOfWeek.includes(format(currentDate, 'EEEE').toLowerCase());
 
           if (shouldInclude) {
-            eventsToCreate.push({
+            childEventsToCreate.push({
               user_id: user.id,
               title: newEvent.title,
               description: newEvent.description,
@@ -190,6 +227,7 @@ export default function Calendar() {
               category: newEvent.category,
               color: color,
               is_recurring: true,
+              parent_event_id: parentEvent.id,
               recurrence_frequency: recurringOptions.frequency,
               recurrence_interval: recurringOptions.interval,
               recurrence_days_of_week: recurringOptions.daysOfWeek,
@@ -197,7 +235,6 @@ export default function Calendar() {
             });
           }
 
-          // Increment date based on frequency
           if (recurringOptions.frequency === 'day') {
             currentDate = addDays(currentDate, recurringOptions.interval);
           } else if (recurringOptions.frequency === 'week') {
@@ -209,14 +246,19 @@ export default function Calendar() {
           }
         }
 
-        const { data, error } = await supabase
-          .from('events')
-          .insert(eventsToCreate)
-          .select();
+        let allNewEvents = [parentEvent];
+        
+        if (childEventsToCreate.length > 0) {
+          const { data: childEvents, error: childError } = await supabase
+            .from('events')
+            .insert(childEventsToCreate)
+            .select();
 
-        if (error) throw error;
+          if (childError) throw childError;
+          allNewEvents = [...allNewEvents, ...childEvents];
+        }
 
-        const newEventObjs: Event[] = data.map(event => ({
+        const newEventObjs: Event[] = allNewEvents.map(event => ({
           ...event,
           date: new Date(event.date),
         }));
