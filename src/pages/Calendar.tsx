@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -23,6 +24,9 @@ interface Event {
   duration: number;
   category: string;
   color: string;
+  is_recurring?: boolean;
+  parent_event_id?: string;
+  recurrence_frequency?: string;
 }
 
 type ViewType = "day" | "week" | "month";
@@ -64,6 +68,8 @@ export default function Calendar() {
   const [isRecurring, setIsRecurring] = useState(false);
   const [isRecurringDialogOpen, setIsRecurringDialogOpen] = useState(false);
   const [recurringOptions, setRecurringOptions] = useState<any>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteAllRecurring, setDeleteAllRecurring] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -271,26 +277,59 @@ export default function Calendar() {
     }
   };
 
-  const handleDeleteEvent = async () => {
+  const initiateDelete = () => {
+    if (!editingEvent) return;
+    
+    // Check if this is a recurring event
+    if (editingEvent.is_recurring || editingEvent.parent_event_id) {
+      setIsDeleteDialogOpen(true);
+    } else {
+      handleDeleteEvent(false);
+    }
+  };
+
+  const handleDeleteEvent = async (deleteAll: boolean) => {
     if (!editingEvent) return;
 
     try {
-      const { error } = await supabase
-        .from('events')
-        .delete()
-        .eq('id', editingEvent.id);
+      if (deleteAll && (editingEvent.is_recurring || editingEvent.parent_event_id)) {
+        // Delete all events in the recurring series
+        const parentId = editingEvent.parent_event_id || editingEvent.id;
+        
+        const { error } = await supabase
+          .from('events')
+          .delete()
+          .or(`id.eq.${parentId},parent_event_id.eq.${parentId}`);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      setEvents(events.filter(e => e.id !== editingEvent.id));
+        setEvents(events.filter(e => e.id !== parentId && e.parent_event_id !== parentId));
+        
+        toast({
+          title: "Recurring events deleted",
+          description: "All events in the series have been deleted successfully",
+        });
+      } else {
+        // Delete only this event
+        const { error } = await supabase
+          .from('events')
+          .delete()
+          .eq('id', editingEvent.id);
+
+        if (error) throw error;
+
+        setEvents(events.filter(e => e.id !== editingEvent.id));
+        
+        toast({
+          title: "Event deleted",
+          description: "Your event has been deleted successfully",
+        });
+      }
+
       setNewEvent({ title: "", description: "", time: "12:00", duration: 60, category: "Work" });
       setEditingEvent(null);
       setIsDialogOpen(false);
-      
-      toast({
-        title: "Event deleted",
-        description: "Your event has been deleted successfully",
-      });
+      setIsDeleteDialogOpen(false);
     } catch (error) {
       console.error('Error deleting event:', error);
       toast({
@@ -721,7 +760,7 @@ export default function Calendar() {
               </div>
               <DialogFooter className="flex gap-2">
                 {editingEvent && (
-                  <Button onClick={handleDeleteEvent} variant="destructive" className="flex-1">
+                  <Button onClick={initiateDelete} variant="destructive" className="flex-1">
                     Delete Event
                   </Button>
                 )}
@@ -746,6 +785,30 @@ export default function Calendar() {
           setTimeout(() => handleAddEvent(), 100);
         }}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Recurring Event</AlertDialogTitle>
+            <AlertDialogDescription>
+              This is a recurring event. Would you like to delete all occurrences or just this one?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleDeleteEvent(false)}>
+              Delete This Event
+            </AlertDialogAction>
+            <AlertDialogAction 
+              onClick={() => handleDeleteEvent(true)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete All Events
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Calendar Views */}
       {viewType === "month" && renderMonthView()}
