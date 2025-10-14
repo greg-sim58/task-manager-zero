@@ -14,10 +14,15 @@ export default function Dashboard() {
     percentIncomplete: 0,
   });
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+  const [exchangeRates, setExchangeRates] = useState<{ usd: number; eur: number }>({
+    usd: 0,
+    eur: 0,
+  });
 
   useEffect(() => {
     fetchTasks();
     fetchUpcomingEvents();
+    fetchExchangeRates();
   }, []);
 
   const fetchTasks = async () => {
@@ -52,6 +57,21 @@ export default function Dashboard() {
 
     if (events) {
       setUpcomingEvents(events);
+    }
+  };
+
+  const fetchExchangeRates = async () => {
+    try {
+      const response = await fetch("https://api.exchangerate-api.com/v4/latest/ZAR");
+      const data = await response.json();
+      if (data.rates) {
+        setExchangeRates({
+          usd: Number((1 / data.rates.USD).toFixed(2)),
+          eur: Number((1 / data.rates.EUR).toFixed(2)),
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch exchange rates:", error);
     }
   };
 
@@ -103,8 +123,17 @@ export default function Dashboard() {
         />
         <KPICard
           title="Conversion Rate"
-          value="3.45%"
-          change="+0.5% from last month"
+          value="ZAR"
+          change={
+            exchangeRates.usd > 0 ? (
+              <div className="space-y-1">
+                <div className="text-xs">$: R{exchangeRates.usd}</div>
+                <div className="text-xs">€: R{exchangeRates.eur}</div>
+              </div>
+            ) : (
+              "Loading rates..."
+            )
+          }
           icon={<Percent className="h-5 w-5" />}
           variant="conversion"
         />
