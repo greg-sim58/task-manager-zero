@@ -820,12 +820,7 @@ export default function Calendar() {
         open={isRecurringDialogOpen}
         onOpenChange={setIsRecurringDialogOpen}
         startDate={selectedDate}
-        onSave={(options) => {
-          setRecurringOptions(options);
-          setIsRecurringDialogOpen(false);
-          // Automatically trigger event creation after setting recurring options
-          setTimeout(() => handleAddEvent(), 100);
-        }}
+        onSave={setRecurringOptions}
       />
 
       {/* Delete Confirmation Dialog */}
