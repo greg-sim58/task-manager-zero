@@ -23,6 +23,26 @@ export default function Dashboard() {
     fetchTasks();
     fetchUpcomingEvents();
     fetchExchangeRates();
+
+    // Subscribe to realtime changes for events
+    const channel = supabase
+      .channel('events-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'events'
+        },
+        () => {
+          fetchUpcomingEvents();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchTasks = async () => {
