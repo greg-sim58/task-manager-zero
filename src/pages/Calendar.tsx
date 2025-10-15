@@ -335,17 +335,24 @@ export default function Calendar() {
 
     try {
       if (deleteAll && (editingEvent.is_recurring || editingEvent.parent_event_id)) {
-        // Delete all events in the recurring series
+        // Delete all events in the recurring series (children first, then parent)
         const parentId = editingEvent.parent_event_id || editingEvent.id;
-        
-        const { error } = await supabase
+
+        const { error: childError } = await supabase
           .from('events')
           .delete()
-          .or(`id.eq.${parentId},parent_event_id.eq.${parentId}`);
+          .eq('parent_event_id', parentId);
+        if (childError) throw childError;
 
-        if (error) throw error;
+        const { error: parentError } = await supabase
+          .from('events')
+          .delete()
+          .eq('id', parentId);
+        if (parentError) throw parentError;
 
         setEvents(events.filter(e => e.id !== parentId && e.parent_event_id !== parentId));
+        // Ensure UI consistency in case of local state drift
+        loadEvents();
         
         toast({
           title: "Recurring events deleted",
