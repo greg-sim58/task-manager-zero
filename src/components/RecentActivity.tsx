@@ -8,6 +8,7 @@ type Task = {
   id: string;
   title: string;
   due_date: string | null;
+  priority: string;
 };
 
 type Event = {
@@ -27,35 +28,33 @@ export function RecentActivity() {
   }, []);
 
   const fetchPendingTasks = async () => {
-    const today = new Date();
-    const next20Days = new Date();
-    next20Days.setDate(today.getDate() + 20);
-
     const { data } = await supabase
       .from("tasks")
-      .select("id, title, due_date")
+      .select("id, title, due_date, priority")
       .eq("status", "pending")
-      .gte("due_date", today.toISOString())
-      .lte("due_date", next20Days.toISOString())
-      .order("due_date", { ascending: true });
+      .order("priority", { ascending: true })
+      .limit(6);
 
     if (data) {
-      setTasks(data);
+      // Sort by priority: high, medium, low
+      const sortedData = data.sort((a, b) => {
+        const priorityOrder = { high: 1, medium: 2, low: 3 };
+        return priorityOrder[a.priority as keyof typeof priorityOrder] - priorityOrder[b.priority as keyof typeof priorityOrder];
+      });
+      setTasks(sortedData);
     }
   };
 
   const fetchUpcomingEvents = async () => {
     const today = new Date();
-    const next20Days = new Date();
-    next20Days.setDate(today.getDate() + 20);
 
     const { data } = await supabase
       .from("events")
       .select("id, title, date, time")
       .gte("date", today.toISOString())
-      .lte("date", next20Days.toISOString())
       .order("date", { ascending: true })
-      .order("time", { ascending: true });
+      .order("time", { ascending: true })
+      .limit(6);
 
     if (data) {
       setEvents(data);
