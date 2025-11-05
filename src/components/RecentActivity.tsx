@@ -1,48 +1,102 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserPlus, ShoppingBag, CreditCard } from "lucide-react";
+import { CheckSquare, Calendar as CalendarIcon } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
-const activities = [
-  {
-    icon: UserPlus,
-    text: "New user registered",
-    time: "2 minutes ago",
-    bgColor: "bg-[hsl(var(--users-bg))]",
-    iconColor: "text-[hsl(var(--users-icon))]",
-  },
-  {
-    icon: ShoppingBag,
-    text: "New order #1234",
-    time: "15 minutes ago",
-    bgColor: "bg-[hsl(var(--orders-bg))]",
-    iconColor: "text-[hsl(var(--orders-icon))]",
-  },
-  {
-    icon: CreditCard,
-    text: "Payment received",
-    time: "1 hour ago",
-    bgColor: "bg-[hsl(var(--revenue-bg))]",
-    iconColor: "text-[hsl(var(--revenue-icon))]",
-  },
-];
+type Task = {
+  id: string;
+  title: string;
+  due_date: string | null;
+};
+
+type Event = {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+};
 
 export function RecentActivity() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+
+  useEffect(() => {
+    fetchPendingTasks();
+    fetchUpcomingEvents();
+  }, []);
+
+  const fetchPendingTasks = async () => {
+    const today = new Date();
+    const next20Days = new Date();
+    next20Days.setDate(today.getDate() + 20);
+
+    const { data } = await supabase
+      .from("tasks")
+      .select("id, title, due_date")
+      .eq("status", "pending")
+      .gte("due_date", today.toISOString())
+      .lte("due_date", next20Days.toISOString())
+      .order("due_date", { ascending: true });
+
+    if (data) {
+      setTasks(data);
+    }
+  };
+
+  const fetchUpcomingEvents = async () => {
+    const today = new Date();
+    const next20Days = new Date();
+    next20Days.setDate(today.getDate() + 20);
+
+    const { data } = await supabase
+      .from("events")
+      .select("id, title, date, time")
+      .gte("date", today.toISOString())
+      .lte("date", next20Days.toISOString())
+      .order("date", { ascending: true })
+      .order("time", { ascending: true });
+
+    if (data) {
+      setEvents(data);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent Activity</CardTitle>
+        <CardTitle>Pending Tasks & Events</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {activities.map((activity, index) => (
-            <div key={index} className="flex items-center gap-4">
-              <div
-                className={`flex h-10 w-10 items-center justify-center rounded-full ${activity.bgColor}`}
-              >
-                <activity.icon className={`h-5 w-5 ${activity.iconColor}`} />
+        <div className="space-y-4 max-h-[400px] overflow-y-auto">
+          {tasks.length === 0 && events.length === 0 && (
+            <p className="text-sm text-muted-foreground">No pending tasks or upcoming events</p>
+          )}
+          
+          {tasks.map((task) => (
+            <div key={`task-${task.id}`} className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--warning-bg))]">
+                <CheckSquare className="h-5 w-5 text-[hsl(var(--warning))]" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium">{activity.text}</p>
-                <p className="text-xs text-muted-foreground">{activity.time}</p>
+                <p className="text-sm font-medium">{task.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  Due: {task.due_date ? format(new Date(task.due_date), "MMM d, yyyy") : "No due date"}
+                </p>
+              </div>
+            </div>
+          ))}
+
+          {events.map((event) => (
+            <div key={`event-${event.id}`} className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--users-bg))]">
+                <CalendarIcon className="h-5 w-5 text-[hsl(var(--users-icon))]" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">{event.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {format(new Date(event.date), "MMM d, yyyy")} at {event.time}
+                </p>
               </div>
             </div>
           ))}
