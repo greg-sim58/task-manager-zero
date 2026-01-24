@@ -46,20 +46,25 @@ export default function Dashboard() {
   }, []);
 
   const fetchTasks = async () => {
-    const { data: tasks } = await supabase
-      .from("tasks")
-      .select("status");
+    try {
+      const [pendingReq, inProgressReq, completedReq] = await Promise.all([
+        supabase.from("tasks").select("*", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("tasks").select("*", { count: "exact", head: true }).eq("status", "in_progress"),
+        supabase.from("tasks").select("*", { count: "exact", head: true }).eq("status", "completed"),
+      ]);
 
-    if (tasks) {
-      const pending = tasks.filter((t) => t.status === "pending").length;
-      const inProgress = tasks.filter((t) => t.status === "in_progress").length;
-      const completed = tasks.filter((t) => t.status === "completed").length;
-      const total = tasks.length;
-      const percentIncomplete = total > 0 
-        ? Math.round(((pending + inProgress) / total) * 100) 
+      const pending = pendingReq.count || 0;
+      const inProgress = inProgressReq.count || 0;
+      const completed = completedReq.count || 0;
+      const total = pending + inProgress + completed;
+
+      const percentIncomplete = total > 0
+        ? Math.round(((pending + inProgress) / total) * 100)
         : 0;
 
       setTaskStats({ pending, inProgress, completed, percentIncomplete });
+    } catch (error) {
+      console.error("Error fetching task stats:", error);
     }
   };
 

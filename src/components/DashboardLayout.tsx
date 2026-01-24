@@ -1,5 +1,5 @@
-import { ReactNode, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { Input } from "@/components/ui/input";
@@ -8,22 +8,21 @@ import { Bell, User, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 
-interface DashboardLayoutProps {
-  children: ReactNode;
-}
-
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+export function DashboardLayout() {
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
     // Check authentication status
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       if (!session) {
         navigate("/auth");
       }
-    });
+    };
+    
+    checkAuth();
 
     const {
       data: { subscription },
@@ -72,7 +71,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </Button>
             </div>
           </header>
-          <main className="flex-1 p-6">{children}</main>
+          <main className="flex-1 p-6">
+            <Outlet />
+          </main>
         </div>
       </div>
     </SidebarProvider>
