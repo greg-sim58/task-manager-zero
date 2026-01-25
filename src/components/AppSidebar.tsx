@@ -1,9 +1,9 @@
-import { 
-  LayoutDashboard, 
-  BarChart3, 
-  Wrench, 
-  Settings, 
-  Users, 
+import {
+  LayoutDashboard,
+  BarChart3,
+  Wrench,
+  Settings,
+  Users,
   Package,
   HelpCircle,
   LogOut,
@@ -64,12 +64,12 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border px-4 py-4">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <span className="text-lg font-bold">S</span>
+            <span className="text-lg font-bold">L</span>
           </div>
-          {open && <span className="text-lg font-semibold">ShadcnApp</span>}
+          {open && <span className="text-lg font-semibold">Task Manager</span>}
         </div>
       </SidebarHeader>
-      
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
