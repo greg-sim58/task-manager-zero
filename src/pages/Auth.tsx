@@ -92,9 +92,9 @@ export default function Auth() {
         <CardHeader className="space-y-1">
           <div className="flex items-center gap-2 mb-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <span className="text-xl font-bold">S</span>
+              <span className="text-xl font-bold">T</span>
             </div>
-            <span className="text-2xl font-bold">ShadcnApp</span>
+            <span className="text-2xl font-bold">Task Zero</span>
           </div>
           <CardTitle className="text-2xl">
             {isLogin ? "Welcome back" : "Create an account"}

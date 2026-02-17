@@ -1,0 +1,25 @@
+Based on the provided excerpts, here is a consolidated transcript of the video **"I Built an AI CFO — You Won't Believe What It Did"** from the YouTube channel "Mike’s F9 Finance." This transcript highlights the key steps and concepts discussed in the source material.
+
+### **Video Transcript: Building an AI CFO**
+
+**Introduction and Tools**
+"My business's newest CFO works 24 hours a day, never asks for time off, and doesn't even collect a paycheck. That's right, I built an **AI CFO to coordinate an entire team of AI agents** that can support every finance function in the business, and I did it without writing a single line of code." To build this, you only need two free tools: **n8n** (the workflow builder) and an AI tool like **ChatGPT** (the reasoning engine).,
+
+**Setting Up the AI CFO (The Orchestrator)**
+The workflow begins with a **chat trigger node** connected to a main AI agent acting as the CFO. To define its behavior, a "master prompt" is generated using ChatGPT to guide its thinking and reasoning., The CFO acts as an **executive finance orchestrator**, receiving inputs and delegating them to specialist agents. For high-level reasoning and "thinking" capabilities, a model like **GPT-4o** is used, along with a **memory tool** so the agent can remember the last 10 chat interactions.
+
+**Creating Specialist Agent Tools**
+The CFO agent calls on specialized tools, which are themselves AI agents:
+*   **FP&A Tool:** Dedicated to business analysis and reporting.
+*   **Accounting Tool:** Handles technical transaction treatments and policy application.
+*   **Treasury Tool:** Manages cash optimization and investment strategies.
+
+While the main CFO uses a powerful reasoning model, these specialist tools can run on **"lighter, cheaper, more affordable models"** (like GPT-4o-mini, referred to in the source as 4.0 or 5.2) to save on processing costs., Each tool is equipped with **web search** and a **code interpreter**.,
+
+**Iterative Training and Troubleshooting**
+During initial testing, the AI might provide a general answer without engaging its specialist tools. To fix this, you must **revise the system prompt** to explicitly instruct the CFO to "call a tool" for technical requests., Once refined, the workflow becomes seamless: 
+*   An accounting query about an unpaid invoice is routed to the **Accounting Agent**, which suggests increasing the **allowance for doubtful accounts**.,
+*   A query about excess cash is routed to the **Treasury Agent**, which suggests options like **US Treasury bills** or **money market funds**.,
+
+**Future Potential**
+This infrastructure is compared to an **iPhone**; the power lies in the "applications" or data you attach to it. By adding **embeddings** like company policy manuals or **month-end reports**, these agents can transition from general advice to "running **month-end workflows**" and answering specific questions about your actual business data.,
