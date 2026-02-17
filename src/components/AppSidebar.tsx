@@ -1,9 +1,9 @@
-import { 
-  LayoutDashboard, 
-  BarChart3, 
-  Wrench, 
-  Settings, 
-  Users, 
+import {
+  LayoutDashboard,
+  BarChart3,
+  Wrench,
+  Settings,
+  Users,
   Package,
   HelpCircle,
   LogOut,
@@ -69,7 +69,7 @@ export function AppSidebar() {
           {open && <span className="text-lg font-semibold">Task Zero</span>}
         </div>
       </SidebarHeader>
-      
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>

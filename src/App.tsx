@@ -27,70 +27,18 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
-            <Route
-              path="/"
-              element={
-                <DashboardLayout>
-                  <Dashboard />
-                </DashboardLayout>
-              }
-            />
-            <Route
-              path="/tasks"
-              element={
-                <DashboardLayout>
-                  <Tasks />
-                </DashboardLayout>
-              }
-            />
-            <Route
-              path="/reports"
-              element={
-                <DashboardLayout>
-                  <Reports />
-                </DashboardLayout>
-              }
-            />
-            <Route
-              path="/calendar"
-              element={
-                <DashboardLayout>
-                  <Calendar />
-                </DashboardLayout>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <DashboardLayout>
-                  <Settings />
-                </DashboardLayout>
-              }
-            />
-            <Route
-              path="/users"
-              element={
-                <DashboardLayout>
-                  <Users />
-                </DashboardLayout>
-              }
-            />
-            <Route
-              path="/products"
-              element={
-                <DashboardLayout>
-                  <Products />
-                </DashboardLayout>
-              }
-            />
-            <Route
-              path="/support"
-              element={
-                <DashboardLayout>
-                  <Support />
-                </DashboardLayout>
-              }
-            />
+
+            <Route element={<DashboardLayout />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/users" element={<Users />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/support" element={<Support />} />
+            </Route>
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
