@@ -31,6 +31,7 @@ export default function Dashboard() {
     fetchExchangeRates();
 
     // Subscribe to realtime changes for events
+    /* 
     const channel = supabase
       .channel('events-changes')
       .on(
@@ -49,19 +50,20 @@ export default function Dashboard() {
     return () => {
       supabase.removeChannel(channel);
     };
+    */
   }, []);
 
   const fetchTasks = async () => {
     try {
-      const [pendingReq, inProgressReq, completedReq] = await Promise.all([
-        supabase.from("tasks").select("*", { count: "exact", head: true }).eq("status", "pending"),
+      const [todoReq, inProgressReq, doneReq] = await Promise.all([
+        supabase.from("tasks").select("*", { count: "exact", head: true }).eq("status", "todo"),
         supabase.from("tasks").select("*", { count: "exact", head: true }).eq("status", "in_progress"),
-        supabase.from("tasks").select("*", { count: "exact", head: true }).eq("status", "completed"),
+        supabase.from("tasks").select("*", { count: "exact", head: true }).eq("status", "done"),
       ]);
 
-      const pending = pendingReq.count || 0;
+      const pending = todoReq.count || 0;
       const inProgress = inProgressReq.count || 0;
-      const completed = completedReq.count || 0;
+      const completed = doneReq.count || 0;
       const total = pending + inProgress + completed;
 
       const percentIncomplete = total > 0
@@ -75,6 +77,7 @@ export default function Dashboard() {
   };
 
   const fetchUpcomingEvents = async () => {
+    /*
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -89,6 +92,7 @@ export default function Dashboard() {
     if (events) {
       setUpcomingEvents(events);
     }
+    */
   };
 
   const fetchExchangeRates = async () => {
@@ -114,9 +118,9 @@ export default function Dashboard() {
           value={`${taskStats.percentIncomplete}%`}
           change={
             <div className="space-y-1">
-              <div className="text-[hsl(var(--warning))]">{taskStats.pending} pending</div>
+              <div className="text-[hsl(var(--warning))]">{taskStats.pending} todo</div>
               <div className="text-[hsl(var(--primary))]">{taskStats.inProgress} in progress</div>
-              <div className="text-[hsl(var(--success))]">{taskStats.completed} completed</div>
+              <div className="text-[hsl(var(--success))]">{taskStats.completed} done</div>
             </div>
           }
           icon={<CheckSquare className="h-5 w-5" />}

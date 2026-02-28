@@ -31,7 +31,7 @@ export function RecentActivity() {
     const { data } = await supabase
       .from("tasks")
       .select("id, title, due_date, priority")
-      .eq("status", "pending")
+      .eq("status", "todo")
       .order("priority", { ascending: true })
       .limit(6);
 
@@ -46,6 +46,7 @@ export function RecentActivity() {
   };
 
   const fetchUpcomingEvents = async () => {
+    /*
     const today = new Date();
 
     const { data } = await supabase
@@ -59,19 +60,20 @@ export function RecentActivity() {
     if (data) {
       setEvents(data);
     }
+    */
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Pending Tasks & Events</CardTitle>
+        <CardTitle>Todo Tasks</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4 max-h-[400px] overflow-y-auto">
           {tasks.length === 0 && events.length === 0 && (
-            <p className="text-sm text-muted-foreground">No pending tasks or upcoming events</p>
+            <p className="text-sm text-muted-foreground">No todo tasks</p>
           )}
-          
+
           {tasks.map((task) => (
             <div key={`task-${task.id}`} className="flex items-center gap-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--warning-bg))]">

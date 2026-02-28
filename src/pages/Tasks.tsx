@@ -29,16 +29,16 @@ interface Task {
   id: string;
   title: string;
   description: string | null;
-  status: "pending" | "in_progress" | "completed";
+  status: "todo" | "in_progress" | "done";
   priority: "low" | "medium" | "high";
   due_date: string | null;
   created_at: string;
 }
 
 const statusColors = {
-  pending: "bg-[hsl(var(--orders-bg))] text-[hsl(var(--orders-icon))]",
+  todo: "bg-[hsl(var(--orders-bg))] text-[hsl(var(--orders-icon))]",
   in_progress: "bg-[hsl(var(--revenue-bg))] text-[hsl(var(--revenue-icon))]",
-  completed: "bg-[hsl(var(--users-bg))] text-[hsl(var(--users-icon))]",
+  done: "bg-[hsl(var(--users-bg))] text-[hsl(var(--users-icon))]",
 };
 
 const priorityColors = {
@@ -55,13 +55,13 @@ export default function Tasks() {
   const [formData, setFormData] = useState<{
     title: string;
     description: string;
-    status: "pending" | "in_progress" | "completed";
+    status: "todo" | "in_progress" | "done";
     priority: "low" | "medium" | "high";
     due_date: string;
   }>({
     title: "",
     description: "",
-    status: "pending",
+    status: "todo",
     priority: "medium",
     due_date: "",
   });
@@ -176,7 +176,7 @@ export default function Tasks() {
     setFormData({
       title: task.title,
       description: task.description || "",
-      status: task.status as "pending" | "in_progress" | "completed",
+      status: task.status as "todo" | "in_progress" | "done",
       priority: task.priority as "low" | "medium" | "high",
       due_date: task.due_date ? task.due_date.split("T")[0] : "",
     });
@@ -188,7 +188,7 @@ export default function Tasks() {
     setFormData({
       title: "",
       description: "",
-      status: "pending",
+      status: "todo",
       priority: "medium",
       due_date: "",
     });
@@ -262,9 +262,9 @@ export default function Tasks() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="todo">Todo</SelectItem>
                       <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="done">Done</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
