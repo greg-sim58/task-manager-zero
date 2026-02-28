@@ -272,11 +272,11 @@ export function TaskDetailsSidebar({
 
                     <div className="pt-4 space-y-4 pb-4">
                         <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold bg-[#FBF14A] px-2 py-1 rounded text-black uppercase tracking-wider">Subtasks</span>
+                            <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Subtasks</Label>
                             <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                className="h-7 gap-1 text-[10px] bg-[#FBF14A] hover:bg-yellow-300 text-black font-bold rounded-md px-3"
+                                className="h-7 gap-1 text-[10px] font-bold rounded-[var(--radius)] px-3 border-muted-foreground/20 text-muted-foreground hover:bg-accent"
                                 onClick={handleBreakDown}
                                 disabled={isBreakingDown}
                             >
@@ -285,7 +285,7 @@ export function TaskDetailsSidebar({
                                 ) : (
                                     <Sparkles className="h-3 w-3" />
                                 )}
-                                # Break Down with AI
+                                Break Down with AI
                             </Button>
                         </div>
 
@@ -327,13 +327,13 @@ export function TaskDetailsSidebar({
                     <Button
                         variant="outline"
                         size="icon"
-                        className="flex-shrink-0 h-11 w-11 rounded-xl border-destructive/20 text-destructive hover:bg-destructive/5"
+                        className="flex-shrink-0 h-11 w-11 rounded-[var(--radius)] border-destructive/20 text-destructive hover:bg-destructive/5"
                         onClick={onDelete}
                     >
                         <Trash2 className="h-5 w-5" />
                     </Button>
                     <Button
-                        className="flex-1 h-11 rounded-xl bg-[#616AE3] hover:bg-[#4F59D1] text-white font-semibold text-base shadow-sm"
+                        className="flex-1 h-11 rounded-[var(--radius)] bg-[#616AE3] hover:bg-[#4F59D1] text-white font-semibold text-base shadow-sm"
                         onClick={handleSave}
                         disabled={isUpdating}
                     >

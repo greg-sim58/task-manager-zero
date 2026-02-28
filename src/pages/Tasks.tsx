@@ -183,19 +183,19 @@ export default function Tasks() {
           placeholder="Add a task... (or type naturally for AI)"
           value={newTaskTitle}
           onChange={(e) => setNewTaskTitle(e.target.value)}
-          className="h-12 pl-4 pr-12 text-base shadow-sm border-border/60 focus-visible:ring-primary/20 transition-all rounded-xl"
+          className="h-12 pl-4 pr-12 text-base shadow-sm border-border/60 focus-visible:ring-primary/20 transition-all rounded-[var(--radius)]"
           disabled={isParsing}
         />
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
           {isParsing ? (
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           ) : (
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-accent/50 text-[10px] font-medium text-muted-foreground opacity-0 group-focus-within:opacity-100 transition-opacity">
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-[var(--radius)] bg-accent/50 text-[10px] font-medium text-muted-foreground opacity-0 group-focus-within:opacity-100 transition-opacity">
               <Sparkles className="h-3 w-3" />
               AI Enabled
             </div>
           )}
-          <Button type="submit" size="icon" variant="ghost" className="h-8 w-8 rounded-lg" disabled={!newTaskTitle.trim() || isParsing}>
+          <Button type="submit" size="icon" variant="ghost" className="h-8 w-8 rounded-[var(--radius)]" disabled={!newTaskTitle.trim() || isParsing}>
             <Plus className="h-5 w-5" />
           </Button>
         </div>
@@ -214,7 +214,7 @@ export default function Tasks() {
           </CardContent>
         </Card>
       ) : (
-        <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
+        <div className="flex flex-col gap-1">
           {rootTasks.map((task) => (
             <TaskRow
               key={task.id}
