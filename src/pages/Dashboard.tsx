@@ -6,6 +6,12 @@ import { CheckSquare, Calendar as CalendarIcon, ShoppingCart, Percent } from "lu
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 
+interface UpcomingEvent {
+  title: string;
+  date: string;
+  time: string;
+}
+
 export default function Dashboard() {
   const [taskStats, setTaskStats] = useState({
     pending: 0,
@@ -13,7 +19,7 @@ export default function Dashboard() {
     completed: 0,
     percentIncomplete: 0,
   });
-  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
   const [exchangeRates, setExchangeRates] = useState<{ usd: number; eur: number }>({
     usd: 0,
     eur: 0,
