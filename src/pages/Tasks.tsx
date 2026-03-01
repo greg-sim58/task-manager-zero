@@ -1,12 +1,20 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Sparkles, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Sparkles,
+  Loader2,
+  Calendar,
+  List,
+  Send
+} from "lucide-react";
 import { TaskRow, Task } from "@/components/TaskRow";
 import { TaskDetailsSidebar } from "@/components/TaskDetailsSidebar";
+
+import { isToday, isAfter, parseISO, startOfToday } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export default function Tasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -16,6 +24,7 @@ export default function Tasks() {
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [isParsing, setIsParsing] = useState(false);
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
+  const [activeFilter, setActiveFilter] = useState<'Today' | 'Upcoming' | 'All Tasks' | 'AI Insights'>('Today');
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -161,6 +170,29 @@ export default function Tasks() {
     });
   };
 
+  const filteredTasks = useMemo(() => {
+    const today = startOfToday();
+    return tasks.filter((task) => {
+      if (activeFilter === 'Today') {
+        return task.due_date && isToday(parseISO(task.due_date));
+      }
+      if (activeFilter === 'Upcoming') {
+        return task.due_date && isAfter(parseISO(task.due_date), today) && !isToday(parseISO(task.due_date));
+      }
+      return true; // All Tasks and AI Insights
+    });
+  }, [tasks, activeFilter]);
+
+  const rootTasks = filteredTasks.filter((t) => !t.parent_id);
+  const getSubtasks = (parentId: string) => tasks.filter((t) => t.parent_id === parentId);
+
+  const navigationItems = [
+    { title: "Today", icon: Calendar, color: "bg-blue-600 text-white" },
+    { title: "Upcoming", icon: Calendar, color: "hover:bg-accent/50" },
+    { title: "All Tasks", icon: List, color: "hover:bg-accent/50" },
+    { title: "AI Insights", icon: Sparkles, color: "hover:bg-accent/50" },
+  ];
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -169,68 +201,84 @@ export default function Tasks() {
     );
   }
 
-  const rootTasks = tasks.filter((t) => !t.parent_id);
-  const getSubtasks = (parentId: string) => tasks.filter((t) => t.parent_id === parentId);
-
   return (
-    <div className="w-full space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">All Tasks</h1>
-      </div>
+    <div className="flex -m-6 h-[calc(100vh-64px)] overflow-hidden">
+      {/* Page-level Sidebar / Navigation */}
+      <aside className="w-64 border-r border-border/40 flex flex-col p-4 pt-6 bg-background/50 backdrop-blur-sm">
+        <nav className="space-y-1">
+          {navigationItems.map((item) => (
+            <button
+              key={item.title}
+              onClick={() => setActiveFilter(item.title as any)}
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group",
+                activeFilter === item.title
+                  ? (item.title === "Today" ? "bg-[#5D5FEF] text-white shadow-sm" : "bg-accent/80 text-foreground")
+                  : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
+              )}
+            >
+              <item.icon className={cn("h-4 w-4 shrink-0", activeFilter === item.title ? "text-inherit" : "text-muted-foreground group-hover:text-foreground")} />
+              {item.title}
+            </button>
+          ))}
+        </nav>
+      </aside>
 
-      <form onSubmit={handleCreateTask} className="relative group">
-        <Input
-          placeholder="Add a task... (or type naturally for AI)"
-          value={newTaskTitle}
-          onChange={(e) => setNewTaskTitle(e.target.value)}
-          className="h-12 pl-4 pr-12 text-base shadow-sm border-border/60 focus-visible:ring-primary/20 transition-all rounded-xl"
-          disabled={isParsing}
-        />
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
-          {isParsing ? (
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto px-8 py-8 space-y-8 bg-background">
+        <div className="w-full space-y-8">
+          <div className="flex items-center justify-between">
+            <h1 className="text-4xl font-bold tracking-tight">{activeFilter}</h1>
+          </div>
+
+          <form onSubmit={handleCreateTask} className="relative group">
+            <Input
+              placeholder="Add a task... (or type naturally for AI)"
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+              className="h-14 pl-5 pr-24 text-base shadow-sm border-border/40 focus-visible:ring-primary/20 transition-all rounded-xl"
+              disabled={isParsing}
+            />
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-4">
+              {isParsing ? (
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              ) : (
+                <div className="flex items-center gap-4 text-muted-foreground/40 group-focus-within:text-muted-foreground/80 transition-colors">
+                  <button type="button" className="hover:text-primary transition-colors">
+                    <Sparkles className="h-5 w-5" />
+                  </button>
+                  <button type="submit" disabled={!newTaskTitle.trim() || isParsing} className="hover:text-primary transition-colors disabled:opacity-30">
+                    <Send className="h-5 w-5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </form>
+
+          {rootTasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-32 text-center text-muted-foreground/60">
+              <p className="text-sm">No tasks yet. Add one above to get started.</p>
+            </div>
           ) : (
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-accent/50 text-[10px] font-medium text-muted-foreground opacity-0 group-focus-within:opacity-100 transition-opacity">
-              <Sparkles className="h-3 w-3" />
-              AI Enabled
+            <div className="flex flex-col gap-1 pr-4">
+              {rootTasks.map((task) => (
+                <TaskRow
+                  key={task.id}
+                  task={task}
+                  subtasks={getSubtasks(task.id)}
+                  onToggleStatus={handleToggleStatus}
+                  onSelectTask={(t) => {
+                    setSelectedTask(t);
+                    setSidebarOpen(true);
+                  }}
+                  isExpanded={expandedTasks.has(task.id)}
+                  onToggleExpand={() => toggleExpand(task.id)}
+                />
+              ))}
             </div>
           )}
-          <Button type="submit" size="icon" variant="ghost" className="h-8 w-8 rounded-lg" disabled={!newTaskTitle.trim() || isParsing}>
-            <Plus className="h-5 w-5" />
-          </Button>
         </div>
-      </form>
-
-      {rootTasks.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="h-12 w-12 rounded-full bg-accent/50 flex items-center justify-center mb-4">
-              <Plus className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-semibold">No tasks yet</h3>
-            <p className="text-muted-foreground max-w-[250px] mt-1">
-              Start by adding a task above. Try "Grocery shopping tomorrow at 5pm"
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
-          {rootTasks.map((task) => (
-            <TaskRow
-              key={task.id}
-              task={task}
-              subtasks={getSubtasks(task.id)}
-              onToggleStatus={handleToggleStatus}
-              onSelectTask={(t) => {
-                setSelectedTask(t);
-                setSidebarOpen(true);
-              }}
-              isExpanded={expandedTasks.has(task.id)}
-              onToggleExpand={() => toggleExpand(task.id)}
-            />
-          ))}
-        </div>
-      )}
+      </main>
 
       <TaskDetailsSidebar
         task={selectedTask}

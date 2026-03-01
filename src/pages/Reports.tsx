@@ -1,4 +1,4 @@
-import { Calculator, FileText, Calendar, Mail } from "lucide-react";
+import { Calculator, FileText, Calendar, Mail, StickyNote } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const tools = [
@@ -21,6 +21,11 @@ const tools = [
     title: "Email",
     description: "Send and receive messages",
     icon: Mail,
+  },
+  {
+    title: "Notes",
+    description: "Capture ideas and take notes",
+    icon: StickyNote,
   },
 ];
 

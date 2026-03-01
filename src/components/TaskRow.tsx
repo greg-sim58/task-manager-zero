@@ -50,8 +50,8 @@ export function TaskRow({
         <div className="flex flex-col w-full">
             <div
                 className={cn(
-                    "group flex items-center py-3 px-4 hover:bg-accent/50 transition-colors cursor-pointer border-b border-border/50",
-                    level > 0 && "pl-12"
+                    "group flex items-center py-3 px-4 hover:bg-accent/50 transition-colors cursor-pointer border border-border/50 bg-card rounded-[var(--radius)] shadow-sm",
+                    level > 0 && "ml-8"
                 )}
                 onClick={() => onSelectTask(task)}
             >
@@ -113,7 +113,7 @@ export function TaskRow({
             </div>
 
             {hasSubtasks && isExpanded && (
-                <div className="flex flex-col">
+                <div className="flex flex-col gap-1 mt-1">
                     {subtasks.map((subtask) => (
                         <TaskRow
                             key={subtask.id}
