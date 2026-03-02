@@ -247,9 +247,9 @@ export function TaskDetailsSidebar({
                             onValueChange={(value: any) => value && setFormData({ ...formData, priority: value })}
                             className="justify-start gap-2"
                         >
-                            <ToggleGroupItem value="low" className="h-8 px-4 text-xs font-medium rounded-md transition-all data-[state=on]:bg-yellow-50 data-[state=on]:text-yellow-600 data-[state=on]:border-yellow-200 border border-transparent">Low</ToggleGroupItem>
-                            <ToggleGroupItem value="medium" className="h-8 px-4 text-xs font-medium rounded-md transition-all data-[state=on]:bg-yellow-50 data-[state=on]:text-yellow-600 data-[state=on]:border-yellow-200 border border-transparent">Medium</ToggleGroupItem>
-                            <ToggleGroupItem value="high" className="h-8 px-4 text-xs font-medium rounded-md transition-all data-[state=on]:bg-yellow-50 data-[state=on]:text-yellow-600 data-[state=on]:border-yellow-200 border border-transparent">High</ToggleGroupItem>
+                            <ToggleGroupItem value="low" className="h-8 px-4 text-xs font-medium rounded-md transition-all data-[state=on]:bg-amber-50 data-[state=on]:text-amber-700 data-[state=on]:border-amber-200 border border-transparent">Low</ToggleGroupItem>
+                            <ToggleGroupItem value="medium" className="h-8 px-4 text-xs font-medium rounded-md transition-all data-[state=on]:bg-orange-50 data-[state=on]:text-orange-700 data-[state=on]:border-orange-200 border border-transparent">Medium</ToggleGroupItem>
+                            <ToggleGroupItem value="high" className="h-8 px-4 text-xs font-medium rounded-md transition-all data-[state=on]:bg-red-50 data-[state=on]:text-red-700 data-[state=on]:border-red-200 border border-transparent">High</ToggleGroupItem>
                         </ToggleGroup>
                     </div>
 

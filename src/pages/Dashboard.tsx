@@ -77,7 +77,6 @@ export default function Dashboard() {
   };
 
   const fetchUpcomingEvents = async () => {
-    /*
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -92,7 +91,6 @@ export default function Dashboard() {
     if (events) {
       setUpcomingEvents(events);
     }
-    */
   };
 
   const fetchExchangeRates = async () => {
