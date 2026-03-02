@@ -198,9 +198,6 @@ export function TaskDetailsSidebar({
             <SheetContent className="sm:max-w-[400px] p-0 flex flex-col">
                 <div className="flex items-center justify-between p-6 pb-2">
                     <h2 className="text-xl font-bold">Task Details</h2>
-                    <button onClick={onClose} className="rounded-full hover:bg-accent p-1 transition-colors">
-                        <X className="h-5 w-5 text-muted-foreground" />
-                    </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-6 space-y-6 pt-4">
