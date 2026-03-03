@@ -98,15 +98,20 @@ export function TaskRow({
                             {task.title}
                         </span>
                         <div className="flex items-center gap-3 mt-0.5">
+                            <Badge className={cn("text-[10px] px-1.5 py-0 h-4 uppercase tracking-wider", priorityColors[task.priority])}>
+                                {task.priority}
+                            </Badge>
                             {task.due_date && (
                                 <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                                     <Calendar className="h-3 w-3" />
                                     {format(new Date(task.due_date), "MMM dd")}
                                 </div>
                             )}
-                            <Badge className={cn("text-[10px] px-1.5 py-0 h-4 uppercase tracking-wider", priorityColors[task.priority])}>
-                                {task.priority}
-                            </Badge>
+                            {hasSubtasks && (
+                                <span className="text-[10px] text-muted-foreground">
+                                    {subtasks.length} Sub Tasks
+                                </span>
+                            )}
                         </div>
                     </div>
                 </div>
