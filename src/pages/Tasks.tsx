@@ -80,9 +80,10 @@ export default function Tasks() {
       if (error) throw error;
       setTasks((data || []) as Task[]);
     } catch (error: any) {
+      console.error("Error fetching tasks:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: "Unable to load tasks. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -140,9 +141,10 @@ export default function Tasks() {
       resetForm();
       fetchTasks();
     } catch (error: any) {
+      console.error("Error saving task:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: "Unable to save task. Please try again.",
         variant: "destructive",
       });
     }
@@ -163,9 +165,10 @@ export default function Tasks() {
 
       fetchTasks();
     } catch (error: any) {
+      console.error("Error deleting task:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: "Unable to delete task. Please try again.",
         variant: "destructive",
       });
     }
