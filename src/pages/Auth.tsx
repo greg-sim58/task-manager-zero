@@ -72,9 +72,10 @@ export default function Auth() {
         setIsLogin(true);
       }
     } catch (error: any) {
+      console.error("Auth error:", error);
       toast({
         title: "Error",
-        description: error.message || "An error occurred",
+        description: "Unable to complete authentication. Please try again.",
         variant: "destructive",
       });
     } finally {

@@ -14,100 +14,109 @@ export type Database = {
   }
   public: {
     Tables: {
-      profiles: {
+      events: {
         Row: {
-          avatar_url: string | null
-          created_at: string | null
-          email: string | null
+          category: string
+          color: string
+          created_at: string
+          date: string
+          description: string | null
+          duration: number
           id: string
-          name: string | null
-          updated_at: string | null
+          is_recurring: boolean | null
+          parent_event_id: string | null
+          recurrence_days_of_week: string[] | null
+          recurrence_end_date: string | null
+          recurrence_frequency: string | null
+          recurrence_interval: number | null
+          time: string
+          title: string
+          updated_at: string
+          user_id: string
         }
         Insert: {
-          avatar_url?: string | null
-          created_at?: string | null
-          email?: string | null
-          id: string
-          name?: string | null
-          updated_at?: string | null
+          category: string
+          color: string
+          created_at?: string
+          date: string
+          description?: string | null
+          duration?: number
+          id?: string
+          is_recurring?: boolean | null
+          parent_event_id?: string | null
+          recurrence_days_of_week?: string[] | null
+          recurrence_end_date?: string | null
+          recurrence_frequency?: string | null
+          recurrence_interval?: number | null
+          time: string
+          title: string
+          updated_at?: string
+          user_id: string
         }
         Update: {
-          avatar_url?: string | null
-          created_at?: string | null
-          email?: string | null
+          category?: string
+          color?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          duration?: number
           id?: string
-          name?: string | null
-          updated_at?: string | null
+          is_recurring?: boolean | null
+          parent_event_id?: string | null
+          recurrence_days_of_week?: string[] | null
+          recurrence_end_date?: string | null
+          recurrence_frequency?: string | null
+          recurrence_interval?: number | null
+          time?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "users"
+            foreignKeyName: "events_parent_event_id_fkey"
+            columns: ["parent_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
         ]
       }
       tasks: {
         Row: {
-          ai_generated: boolean
-          created_at: string | null
+          created_at: string
           description: string | null
           due_date: string | null
           id: string
-          parent_id: string | null
-          position: number
-          priority: Database["public"]["Enums"]["priority"]
-          status: Database["public"]["Enums"]["task_status"]
+          priority: string
+          status: string
           title: string
-          updated_at: string | null
+          updated_at: string
           user_id: string
         }
         Insert: {
-          ai_generated?: boolean
-          created_at?: string | null
+          created_at?: string
           description?: string | null
           due_date?: string | null
           id?: string
-          parent_id?: string | null
-          position?: number
-          priority?: Database["public"]["Enums"]["priority"]
-          status?: Database["public"]["Enums"]["task_status"]
+          priority?: string
+          status?: string
           title: string
-          updated_at?: string | null
+          updated_at?: string
           user_id: string
         }
         Update: {
-          ai_generated?: boolean
-          created_at?: string | null
+          created_at?: string
           description?: string | null
           due_date?: string | null
           id?: string
-          parent_id?: string | null
-          position?: number
-          priority?: Database["public"]["Enums"]["priority"]
-          status?: Database["public"]["Enums"]["task_status"]
+          priority?: string
+          status?: string
           title?: string
-          updated_at?: string | null
+          updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "tasks_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
@@ -117,8 +126,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      priority: "low" | "medium" | "high"
-      task_status: "todo" | "in_progress" | "done"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
