@@ -1,76 +1,30 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Calendar } from "lucide-react";
-import { format } from "date-fns";
-import { logError } from "@/lib/errorLogger";
-import { taskSchema } from "@/lib/validationSchemas";
+import {
+  Plus,
+  Sparkles,
+  Loader2,
+  Calendar,
+  List,
+  Send
+} from "lucide-react";
+import { TaskRow, Task } from "@/components/TaskRow";
+import { TaskDetailsSidebar } from "@/components/TaskDetailsSidebar";
 
-interface Task {
-  id: string;
-  title: string;
-  description: string | null;
-  status: "todo" | "in_progress" | "done";
-  priority: "low" | "medium" | "high";
-  due_date: string | null;
-  created_at: string;
-}
-
-const statusColors = {
-  todo: "bg-[hsl(var(--orders-bg))] text-[hsl(var(--orders-icon))]",
-  in_progress: "bg-[hsl(var(--revenue-bg))] text-[hsl(var(--revenue-icon))]",
-  done: "bg-[hsl(var(--users-bg))] text-[hsl(var(--users-icon))]",
-};
-
-const priorityColors = {
-  low: "bg-[hsl(var(--users-bg))] text-[hsl(var(--users-icon))]",
-  medium: "bg-[hsl(var(--orders-bg))] text-[hsl(var(--orders-icon))]",
-  high: "bg-destructive/10 text-destructive",
-};
+import { isToday, isAfter, parseISO, startOfToday } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export default function Tasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [formData, setFormData] = useState<{
-    title: string;
-    description: string;
-    status: "todo" | "in_progress" | "done";
-    priority: "low" | "medium" | "high";
-    due_date: string;
-  }>({
-    title: "",
-    description: "",
-    status: "todo",
-    priority: "medium",
-    due_date: "",
-  });
-
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [isParsing, setIsParsing] = useState(false);
+  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
+  const [activeFilter, setActiveFilter] = useState<'Today' | 'Upcoming' | 'All Tasks' | 'AI Insights'>('Today');
 
   const fetchTasks = async () => {
     try {
@@ -209,193 +163,122 @@ export default function Tasks() {
     });
   };
 
+  const filteredTasks = useMemo(() => {
+    const today = startOfToday();
+    return tasks.filter((task) => {
+      if (activeFilter === 'Today') {
+        return task.due_date && isToday(parseISO(task.due_date));
+      }
+      if (activeFilter === 'Upcoming') {
+        return task.due_date && isAfter(parseISO(task.due_date), today) && !isToday(parseISO(task.due_date));
+      }
+      return true; // All Tasks and AI Insights
+    });
+  }, [tasks, activeFilter]);
+
+  const rootTasks = filteredTasks.filter((t) => !t.parent_id);
+  const getSubtasks = (parentId: string) => tasks.filter((t) => t.parent_id === parentId);
+
+  const navigationItems = [
+    { title: "Today", icon: Calendar, color: "bg-blue-600 text-white" },
+    { title: "Upcoming", icon: Calendar, color: "hover:bg-accent/50" },
+    { title: "All Tasks", icon: List, color: "hover:bg-accent/50" },
+    { title: "AI Insights", icon: Sparkles, color: "hover:bg-accent/50" },
+  ];
+
   if (loading) {
     return <div className="space-y-6">Loading tasks...</div>;
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Tasks</h1>
-        <Dialog
-          open={dialogOpen}
-          onOpenChange={(open) => {
-            setDialogOpen(open);
-            if (!open) resetForm();
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Task
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[525px]">
-            <DialogHeader>
-              <DialogTitle>
-                {editingTask ? "Edit Task" : "Create New Task"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingTask
-                  ? "Update the task details below"
-                  : "Fill in the details to create a new task"}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  rows={3}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value: any) =>
-                      setFormData({ ...formData, status: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todo">Todo</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="done">Done</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="priority">Priority</Label>
-                  <Select
-                    value={formData.priority}
-                    onValueChange={(value: any) =>
-                      setFormData({ ...formData, priority: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="due_date">Due Date</Label>
-                <Input
-                  id="due_date"
-                  type="date"
-                  value={formData.due_date}
-                  onChange={(e) =>
-                    setFormData({ ...formData, due_date: e.target.value })
-                  }
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setDialogOpen(false);
-                    resetForm();
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit">
-                  {editingTask ? "Update" : "Create"} Task
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {tasks.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-muted-foreground mb-4">No tasks yet</p>
-            <Button onClick={() => setDialogOpen(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Create your first task
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {tasks.map((task) => (
-            <Card key={task.id} className="transition-all hover:shadow-md">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg">{task.title}</CardTitle>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEdit(task)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(task.id)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {task.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {task.description}
-                  </p>
-                )}
-                <div className="flex flex-wrap gap-2">
-                  <Badge className={statusColors[task.status]}>
-                    {task.status.replace("_", " ")}
-                  </Badge>
-                  <Badge className={priorityColors[task.priority]}>
-                    {task.priority}
-                  </Badge>
-                </div>
-                {task.due_date && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    <span>
-                      Due: {format(new Date(task.due_date), "MMM dd, yyyy")}
-                    </span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+    <div className="flex -m-6 h-[calc(100vh-64px)] overflow-hidden">
+      {/* Page-level Sidebar / Navigation */}
+      <aside className="w-64 border-r border-border/40 flex flex-col p-4 pt-6 bg-background/50 backdrop-blur-sm">
+        <nav className="space-y-1">
+          {navigationItems.map((item) => (
+            <button
+              key={item.title}
+              onClick={() => setActiveFilter(item.title as any)}
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group",
+                activeFilter === item.title
+                  ? (item.title === "Today" ? "bg-[#5D5FEF] text-white shadow-sm" : "bg-accent/80 text-foreground")
+                  : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
+              )}
+            >
+              <item.icon className={cn("h-4 w-4 shrink-0", activeFilter === item.title ? "text-inherit" : "text-muted-foreground group-hover:text-foreground")} />
+              {item.title}
+            </button>
           ))}
+        </nav>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto px-8 py-8 space-y-8 bg-background">
+        <div className="w-full space-y-8">
+          <div className="flex items-center justify-between">
+            <h1 className="text-4xl font-bold tracking-tight">{activeFilter}</h1>
+          </div>
+
+          <form onSubmit={handleCreateTask} className="relative group">
+            <Input
+              placeholder="Add a task... (or type naturally for AI)"
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+              className="h-14 pl-5 pr-24 text-base shadow-sm border-border/40 focus-visible:ring-primary/20 transition-all rounded-xl"
+              disabled={isParsing}
+            />
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-4">
+              {isParsing ? (
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              ) : (
+                <div className="flex items-center gap-4 text-muted-foreground/40 group-focus-within:text-muted-foreground/80 transition-colors">
+                  <button type="button" className="hover:text-primary transition-colors">
+                    <Sparkles className="h-5 w-5" />
+                  </button>
+                  <button type="submit" disabled={!newTaskTitle.trim() || isParsing} className="hover:text-primary transition-colors disabled:opacity-30">
+                    <Send className="h-5 w-5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </form>
+
+          {rootTasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-32 text-center text-muted-foreground/60">
+              <p className="text-sm">No tasks yet. Add one above to get started.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1 pr-4">
+              {rootTasks.map((task) => (
+                <TaskRow
+                  key={task.id}
+                  task={task}
+                  subtasks={getSubtasks(task.id)}
+                  onToggleStatus={handleToggleStatus}
+                  onSelectTask={(t) => {
+                    setSelectedTask(t);
+                    setSidebarOpen(true);
+                  }}
+                  isExpanded={expandedTasks.has(task.id)}
+                  onToggleExpand={() => toggleExpand(task.id)}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </main>
+
+      <TaskDetailsSidebar
+        task={selectedTask}
+        isOpen={sidebarOpen}
+        onClose={() => {
+          setSidebarOpen(false);
+          setSelectedTask(null);
+        }}
+        onUpdate={fetchTasks}
+        onDelete={handleDeleteTask}
+      />
     </div>
   );
 }
