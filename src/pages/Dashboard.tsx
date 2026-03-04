@@ -5,6 +5,7 @@ import { QuickActions } from "@/components/QuickActions";
 import { CheckSquare, Calendar as CalendarIcon, ShoppingCart, Percent } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { logError } from "@/lib/errorLogger";
 
 interface UpcomingEvent {
   title: string;
@@ -72,7 +73,7 @@ export default function Dashboard() {
 
       setTaskStats({ pending, inProgress, completed, percentIncomplete });
     } catch (error) {
-      console.error("Error fetching task stats:", error);
+      logError("Dashboard.tasks", error);
     }
   };
 
@@ -106,7 +107,7 @@ export default function Dashboard() {
         });
       }
     } catch (error) {
-      console.error("Failed to fetch exchange rates:", error);
+      logError("Dashboard.exchangeRates", error);
     }
   };
 
