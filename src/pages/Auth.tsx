@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { Session } from "@supabase/supabase-js";
+import { logError } from "@/lib/errorLogger";
+import { authSchema } from "@/lib/validationSchemas";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -41,11 +43,22 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
 
+    const validation = authSchema.safeParse({ email, password });
+    if (!validation.success) {
+      toast({
+        title: "Validation Error",
+        description: validation.error.errors[0].message,
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
+
     try {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+          email: validation.data.email,
+          password: validation.data.password,
         });
 
         if (error) throw error;
@@ -56,8 +69,8 @@ export default function Auth() {
         });
       } else {
         const { error } = await supabase.auth.signUp({
-          email,
-          password,
+          email: validation.data.email,
+          password: validation.data.password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
           },
@@ -72,7 +85,7 @@ export default function Auth() {
         setIsLogin(true);
       }
     } catch (error: any) {
-      console.error("Auth error:", error);
+      logError("Auth", error);
       toast({
         title: "Error",
         description: "Unable to complete authentication. Please try again.",

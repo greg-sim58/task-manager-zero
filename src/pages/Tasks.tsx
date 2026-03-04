@@ -24,6 +24,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { logError } from "@/lib/errorLogger";
+import { taskSchema } from "@/lib/validationSchemas";
 
 interface Task {
   id: string;
@@ -80,7 +82,7 @@ export default function Tasks() {
       if (error) throw error;
       setTasks((data || []) as Task[]);
     } catch (error: any) {
-      console.error("Error fetching tasks:", error);
+      logError("Tasks.fetch", error);
       toast({
         title: "Error",
         description: "Unable to load tasks. Please try again.",
@@ -93,6 +95,16 @@ export default function Tasks() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const validation = taskSchema.safeParse(formData);
+    if (!validation.success) {
+      toast({
+        title: "Validation Error",
+        description: validation.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       const {
@@ -141,7 +153,7 @@ export default function Tasks() {
       resetForm();
       fetchTasks();
     } catch (error: any) {
-      console.error("Error saving task:", error);
+      logError("Tasks.save", error);
       toast({
         title: "Error",
         description: "Unable to save task. Please try again.",
@@ -165,7 +177,7 @@ export default function Tasks() {
 
       fetchTasks();
     } catch (error: any) {
-      console.error("Error deleting task:", error);
+      logError("Tasks.delete", error);
       toast({
         title: "Error",
         description: "Unable to delete task. Please try again.",

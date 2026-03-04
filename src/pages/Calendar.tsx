@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import RecurringEventDialog from "@/components/RecurringEventDialog";
+import { logError } from "@/lib/errorLogger";
+import { eventSchema } from "@/lib/validationSchemas";
 
 interface Event {
   id: string;
@@ -103,7 +105,7 @@ export default function Calendar() {
 
       setEvents(formattedEvents);
     } catch (error) {
-      console.error('Error loading events:', error);
+      logError("Calendar.load", error);
       toast({
         title: "Error loading events",
         description: "Failed to load your events. Please try again.",
@@ -115,6 +117,16 @@ export default function Calendar() {
   };
 
   const handleAddEvent = async () => {
+    const validation = eventSchema.safeParse(newEvent);
+    if (!validation.success) {
+      toast({
+        title: "Validation Error",
+        description: validation.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!selectedDate || !newEvent.title) return;
 
     // If recurring is checked but options not set, open recurring dialog
@@ -310,7 +322,7 @@ export default function Calendar() {
       setRecurringOptions(null);
       setIsDialogOpen(false);
     } catch (error) {
-      console.error('Error saving event:', error);
+      logError("Calendar.save", error);
       toast({
         title: editingEvent ? "Error updating event" : "Error creating event",
         description: "Failed to save your event. Please try again.",
@@ -380,7 +392,7 @@ export default function Calendar() {
       setIsDialogOpen(false);
       setIsDeleteDialogOpen(false);
     } catch (error) {
-      console.error('Error deleting event:', error);
+      logError("Calendar.delete", error);
       toast({
         title: "Error deleting event",
         description: "Failed to delete your event. Please try again.",
