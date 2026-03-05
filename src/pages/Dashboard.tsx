@@ -6,13 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
 import { format, formatDistanceToNow } from "date-fns";
-import { 
-  Plus, 
-  FileText, 
-  CalendarIcon, 
-  Cpu, 
-  Wifi, 
-  HardDrive, 
+import {
+  Plus,
+  FileText,
+  CalendarIcon,
+  Cpu,
+  Wifi,
+  HardDrive,
   Cloud,
   Search,
   MapPin,
@@ -55,8 +55,8 @@ export default function Dashboard() {
   const [recentTasks, setRecentTasks] = useState<Task[]>([]);
   const [todayEvents, setTodayEvents] = useState<Event[]>([]);
   const [taskProgress, setTaskProgress] = useState<TaskProgress[]>([]);
-  const [calculatorDisplay, setCalculatorDisplay] = useState("2,450.00");
-  const [calculatorExpression, setCalculatorExpression] = useState("");
+  const [metalPrices, setMetalPrices] = useState<any>(null);
+  const [metalLoading, setMetalLoading] = useState(true);
   const [weather, setWeather] = useState<WeatherData>({
     temperature: 0,
     condition: "",
@@ -72,6 +72,7 @@ export default function Dashboard() {
     fetchTodayEvents();
     fetchTaskProgress();
     fetchWeather();
+    fetchMetalPrices();
 
     const interval = setInterval(() => {
       setCurrentDateTime(new Date());
@@ -101,7 +102,7 @@ export default function Dashboard() {
           .select("name")
           .eq("id", user.id)
           .single();
-        
+
         if (profile?.name) {
           setUserName(profile.name);
         }
@@ -150,16 +151,28 @@ export default function Dashboard() {
         .limit(2);
 
       if (error) throw error;
-      
+
       // Convert tasks to progress format for display
       const progress: TaskProgress[] = (data || []).map((task) => ({
         title: task.title,
         progress: task.status === "done" ? 95 : task.status === "in_progress" ? 32 : 0,
       }));
-      
+
       setTaskProgress(progress);
     } catch (error) {
       console.error("Error fetching task progress:", error);
+    }
+  };
+
+  const fetchMetalPrices = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-metal-prices');
+      if (error) throw error;
+      setMetalPrices(data);
+    } catch (err) {
+      console.error("Error fetching metal prices:", err);
+    } finally {
+      setMetalLoading(false);
     }
   };
 
@@ -376,30 +389,12 @@ export default function Dashboard() {
     }
   };
 
-  const handleCalculatorClick = (value: string) => {
-    if (value === "C") {
-      setCalculatorDisplay("0");
-      setCalculatorExpression("");
-    } else if (value === "=") {
-      try {
-        const result = eval(calculatorExpression);
-        setCalculatorDisplay(result.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-        setCalculatorExpression(result.toString());
-      } catch {
-        setCalculatorDisplay("Error");
-        setCalculatorExpression("");
-      }
-    } else {
-      const newExpression = calculatorExpression + value;
-      setCalculatorExpression(newExpression);
-      try {
-        const preview = eval(newExpression);
-        setCalculatorDisplay(preview.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-      } catch {
-        // Keep current display if expression is not yet valid
-      }
-    }
-  };
+  const topMetals = metalPrices?.metals ? [
+    { id: 'gold', name: 'Gold', symbol: 'Au', price: metalPrices.metals.gold },
+    { id: 'silver', name: 'Silver', symbol: 'Ag', price: metalPrices.metals.silver },
+    { id: 'platinum', name: 'Platinum', symbol: 'Pt', price: metalPrices.metals.platinum },
+    { id: 'palladium', name: 'Palladium', symbol: 'Pd', price: metalPrices.metals.palladium || 0 }, // fallback just in case
+  ] : [];
 
   return (
     <div className="space-y-6">
@@ -530,56 +525,36 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Row 2: Calculator, Active Sprints */}
-        <Card className="md:col-span-4 bg-card/50 backdrop-blur">
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              <div className="bg-background/60 p-4 rounded-lg text-right">
-                <div className="text-3xl font-mono font-bold">{calculatorDisplay}</div>
+        {/* Row 2: Metal Prices, Active Sprints */}
+        <Card className="md:col-span-4 bg-card/50 backdrop-blur flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Precious Metals</CardTitle>
+            <span className="text-xs text-muted-foreground">{metalPrices?.currency || "USD"} / {metalPrices?.unit || "toz"}</span>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col justify-center space-y-4 pt-2 pb-6">
+            {metalLoading ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-2">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <span className="text-xs">Loading prices...</span>
               </div>
-              <div className="grid grid-cols-4 gap-2">
-                {["7", "8", "9", "+"].map((btn) => (
-                  <Button
-                    key={btn}
-                    variant="outline"
-                    className="h-12"
-                    onClick={() => handleCalculatorClick(btn)}
-                  >
-                    {btn}
-                  </Button>
-                ))}
-                {["4", "5", "6", "×"].map((btn) => (
-                  <Button
-                    key={btn}
-                    variant="outline"
-                    className="h-12"
-                    onClick={() => handleCalculatorClick(btn === "×" ? "*" : btn)}
-                  >
-                    {btn}
-                  </Button>
-                ))}
-                {["1", "2", "3", "-"].map((btn) => (
-                  <Button
-                    key={btn}
-                    variant="outline"
-                    className="h-12"
-                    onClick={() => handleCalculatorClick(btn)}
-                  >
-                    {btn}
-                  </Button>
-                ))}
-                {["C", "0", "=", "÷"].map((btn) => (
-                  <Button
-                    key={btn}
-                    variant={btn === "=" ? "default" : "outline"}
-                    className="h-12"
-                    onClick={() => handleCalculatorClick(btn === "÷" ? "/" : btn)}
-                  >
-                    {btn}
-                  </Button>
+            ) : metalPrices?.metals ? (
+              <div className="space-y-2">
+                {topMetals.map(metal => (
+                  <div key={metal.id} className="flex items-center justify-between bg-background/40 p-2.5 rounded-lg border border-border/50">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-xs text-primary shadow-inner border border-primary/20">{metal.symbol}</div>
+                      <span className="font-medium text-sm">{metal.name}</span>
+                    </div>
+                    {/* Format using Intl.NumberFormat to automatically pick the right currency symbol depending on metalPrices?.currency */}
+                    <span className="font-mono font-bold text-sm tracking-tight">{new Intl.NumberFormat('en-US', { style: 'currency', currency: metalPrices?.currency || 'USD' }).format(metal.price || 0)}</span>
+                  </div>
                 ))}
               </div>
-            </div>
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                Failed to load prices
+              </div>
+            )}
           </CardContent>
         </Card>
 
