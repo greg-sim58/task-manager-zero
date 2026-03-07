@@ -1,5 +1,6 @@
 import { Calculator, FileText, Calendar, Mail, StickyNote } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { MrkPricesCard } from "@/components/MrkPricesCard";
 
 const tools = [
   {
@@ -51,6 +52,12 @@ export default function Reports() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="md:col-span-2 lg:col-span-2">
+          <MrkPricesCard />
+        </div>
       </div>
     </div>
   );
