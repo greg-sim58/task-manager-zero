@@ -1,79 +1,31 @@
-# Code Review Report (Pass 2)
+# Code Review Report
 
-## 1. Security: Implicit Reliance on RLS (Tasks)
-**Severity:** High
-**File:** `src/pages/Tasks.tsx`
-**Lines:** 75-78
-
-```tsx
-const { data, error } = await supabase
-  .from("tasks")
-  .select("*")
-  .order("created_at", { ascending: false });
+## 1. `supabase/functions/get-mrk-prices/index.ts`
+**Bug/Logic Error:** The WooCommerce API typically restricts `per_page` to a maximum of 100. If the store currently (or in the future) has more than 100 products, this API call will silently truncate the catalog, causing missing products on the frontend.
+*Lines 15-19:*
+```typescript
+const response = await fetch("https://www.mrk.co.za/wp-json/wc/store/v1/products?per_page=100", {
+    headers: {
+        'Accept': 'application/json'
+    }
+});
 ```
+**Fix Options:**
+1. Implement pagination using the `page` query parameter and loop until all products are fetched (checking the `X-WP-TotalPages` header).
+2. If only specific categories of metals are needed, add a `category` query parameter to filter results to stay well under the 100-item limit.
+3. Narrow the search directly (e.g., using `search=` query parameter) if only a subset of products is desired.
 
-**Issue:**
-The query selects all tasks without an explicit `.eq('user_id', user.id)` filter. It relies entirely on Row Level Security (RLS) policies. If RLS is disabled or misconfigured (e.g., during a migration or debugging session), this query will leak every user's tasks to any authenticated user.
-
-**Suggested Fixes:**
-1.  Get the current user's ID from the session and add `.eq('user_id', session.user.id)` to the query chain.
-2.  Ensure RLS is enabled on the `tasks` table in Supabase.
-
-## 2. Security: Implicit Reliance on RLS (Events)
-**Severity:** High
-**File:** `src/pages/Dashboard.tsx`
-**Lines:** 75-81
-
-```tsx
-const { data: events } = await supabase
-  .from("events")
-  .select("title, date, time")
-  // ...
+## 2. `src/components/MrkPricesCard.tsx`
+**Bug/State Leak:** If the component unmounts while the asynchronous `fetchPrices` call is in-flight—or on unmount during the 5-minute interval trigger—React state setters (`setMetalPrices`, `setLoading`, `setError`) will be called on an unmounted component.
+*Lines 66, 69, 71:*
+```typescript
+setMetalPrices(extractedPrices);
+// ...
+setError(err instanceof Error ? err.message : "An error occurred");
+// ...
+setLoading(false);
 ```
-
-**Issue:**
-Similar to the Tasks issue, the Dashboard fetches upcoming events without filtering by user. This potentially exposes one user's calendar events to another if RLS is not strictly enforced.
-
-**Suggested Fixes:**
-1.  Add `.eq('user_id', session.user.id)` to the query.
-
-## 3. Security/Performance: Insecure Realtime Subscription
-**Severity:** Medium
-**File:** `src/pages/Dashboard.tsx`
-**Lines:** 28-41
-
-```tsx
-supabase
-  .channel('events-changes')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, ...)
-```
-
-**Issue:**
-The realtime subscription listens to *all* changes on the `events` table.
-1.  **Security**: If RLS doesn't apply to Realtime (it requires specific setup in Supabase called "Replica Identity" and "Enable RLS for Realtime"), a user might receive events belonging to others.
-2.  **Performance**: The client receives a websocket message for *every* event created by *any* user, wasting bandwidth and client CPU filtering irrelevant events.
-
-**Suggested Fixes:**
-1.  Add a filter to the subscription: `filter: 'user_id=eq.' + user.id`.
-```tsx
-.on('postgres_changes', 
-  { event: '*', schema: 'public', table: 'events', filter: `user_id=eq.${user.id}` }, 
-  callback
-)
-```
-
-## 4. Stability: Exchange Rate API Reliability
-**Severity:** Low (External Dependency)
-**File:** `src/pages/Dashboard.tsx`
-**Lines:** 85
-
-```tsx
-fetch("https://api.exchangerate-api.com/v4/latest/ZAR")
-```
-
-**Issue:**
-This is a free, public API endpoint. If it goes down or introduces rate limits, the Dashboard will show "Loading rates..." indefinitely or error out.
-
-**Suggested Fixes:**
-1.  Cache the result in `localStorage` or `sessionStorage` for 24 hours to reduce API calls and provide offline support.
-2.  Add a timeout to the fetch request to prevent hanging.
+**Fix Options:**
+1. Use `@tanstack/react-query` (which is already configured in this project's `App.tsx`) via `useQuery` to handle fetching. It natively manages unmounting, polling (via `refetchInterval`), caching, and loading states without manual `useEffect` bugs.
+2. Use an `AbortController` inside the `useEffect` to abort the `fetchPrices` request in the cleanup function.
+3. Introduce an `isMounted` boolean flag inside the `useEffect` that gets set to `false` in the cleanup function, preventing state updates if `isMounted` is false.

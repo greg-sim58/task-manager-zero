@@ -30,7 +30,7 @@ import { toast } from "@/hooks/use-toast";
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Tasks", url: "/tasks", icon: BarChart3 },
-  { title: "Tools", url: "/reports", icon: Wrench },
+  { title: "Tools", url: "/tools", icon: Wrench },
   { title: "Calendar", url: "/calendar", icon: Calendar },
   { title: "Settings", url: "/settings", icon: Settings },
   { title: "Users", url: "/users", icon: Users },
