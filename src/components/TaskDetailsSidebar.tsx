@@ -287,19 +287,6 @@ export function TaskDetailsSidebar({
                         </div>
 
                         <div className="space-y-2">
-                            {subtasks.map((st) => (
-                                <div key={st.id} className="group flex items-center justify-between py-1 px-2 hover:bg-accent/30 rounded-md transition-colors text-sm">
-                                    <span className={cn(st.status === "done" && "text-muted-foreground line-through")}>{st.title}</span>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        onClick={() => handleDeleteSubtask(st.id)}
-                                    >
-                                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
-                                    </Button>
-                                </div>
-                            ))}
                             <div className="flex items-center gap-2 pt-1 border rounded-md px-2 py-1 focus-within:ring-1 bg-white">
                                 <input
                                     placeholder="Add subtask..."
@@ -316,6 +303,19 @@ export function TaskDetailsSidebar({
                                     <Plus className="h-4 w-4" />
                                 </button>
                             </div>
+                            {subtasks.map((st) => (
+                                <div key={st.id} className="group flex items-center justify-between py-1 px-2 hover:bg-accent/30 rounded-md transition-colors text-sm">
+                                    <span className={cn(st.status === "done" && "text-muted-foreground line-through")}>{st.title}</span>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => handleDeleteSubtask(st.id)}
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                                    </Button>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>

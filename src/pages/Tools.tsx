@@ -1,4 +1,4 @@
-import { FileText, Calendar, StickyNote } from "lucide-react";
+import { FileText, StickyNote } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const tools = [
@@ -6,11 +6,6 @@ const tools = [
     title: "Documents",
     description: "Manage your documents",
     icon: FileText,
-  },
-  {
-    title: "Calendar",
-    description: "Schedule and plan events",
-    icon: Calendar,
   },
   {
     title: "Notes",

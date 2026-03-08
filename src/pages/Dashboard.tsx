@@ -422,7 +422,7 @@ export default function Dashboard() {
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Quick Notes
+              Tasks
             </CardTitle>
             <Button size="icon" variant="ghost" className="h-8 w-8">
               <Plus className="h-4 w-4" />
