@@ -1,64 +1,42 @@
-import { Calculator, FileText, Calendar, Mail, StickyNote } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MrkPricesCard } from "@/components/MrkPricesCard";
-
-const tools = [
-  {
-    title: "Calculator",
-    description: "Perform quick calculations",
-    icon: Calculator,
-  },
-  {
-    title: "Documents",
-    description: "Manage your documents",
-    icon: FileText,
-  },
-  {
-    title: "Calendar",
-    description: "Schedule and plan events",
-    icon: Calendar,
-  },
-  {
-    title: "Email",
-    description: "Send and receive messages",
-    icon: Mail,
-  },
-  {
-    title: "Notes",
-    description: "Capture ideas and take notes",
-    icon: StickyNote,
-  },
-];
 
 export default function Reports() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Tools</h1>
-        <p className="text-muted-foreground">Access your productivity tools</p>
+        <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
+        <p className="text-muted-foreground">View your analytical data and exports.</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {tools.map((tool) => (
-          <Card key={tool.title} className="hover-scale cursor-pointer transition-all hover:shadow-lg">
+      <Tabs defaultValue="information">
+        <TabsList>
+          <TabsTrigger value="information">Information</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="information" className="mt-4">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="md:col-span-2 lg:col-span-2">
+              <MrkPricesCard />
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="activity" className="mt-4">
+          <Card>
             <CardHeader>
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
-                <tool.icon className="h-6 w-6" />
-              </div>
+              <CardTitle>Activity</CardTitle>
+              <CardDescription>Recent activity across the platform</CardDescription>
             </CardHeader>
             <CardContent>
-              <CardTitle className="mb-2">{tool.title}</CardTitle>
-              <CardDescription>{tool.description}</CardDescription>
+              <p className="text-sm text-muted-foreground">No recent activity to report.</p>
             </CardContent>
           </Card>
-        ))}
-      </div>
-
-      <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <div className="md:col-span-2 lg:col-span-2">
-          <MrkPricesCard />
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
+

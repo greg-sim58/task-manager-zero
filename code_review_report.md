@@ -1,31 +1,45 @@
 # Code Review Report
 
-## 1. `supabase/functions/get-mrk-prices/index.ts`
-**Bug/Logic Error:** The WooCommerce API typically restricts `per_page` to a maximum of 100. If the store currently (or in the future) has more than 100 products, this API call will silently truncate the catalog, causing missing products on the frontend.
-*Lines 15-19:*
-```typescript
-const response = await fetch("https://www.mrk.co.za/wp-json/wc/store/v1/products?per_page=100", {
-    headers: {
-        'Accept': 'application/json'
-    }
-});
-```
-**Fix Options:**
-1. Implement pagination using the `page` query parameter and loop until all products are fetched (checking the `X-WP-TotalPages` header).
-2. If only specific categories of metals are needed, add a `category` query parameter to filter results to stay well under the 100-item limit.
-3. Narrow the search directly (e.g., using `search=` query parameter) if only a subset of products is desired.
+## Scope
 
-## 2. `src/components/MrkPricesCard.tsx`
-**Bug/State Leak:** If the component unmounts while the asynchronous `fetchPrices` call is in-flight—or on unmount during the 5-minute interval trigger—React state setters (`setMetalPrices`, `setLoading`, `setError`) will be called on an unmounted component.
-*Lines 66, 69, 71:*
+Recent changes to: `AppSidebar.tsx`, `App.tsx`, `Tools.tsx`, `Reports.tsx`.
+
+---
+
+## 1. `src/components/AppSidebar.tsx`
+
+**Dead imports — `Users` and `Package` are no longer used.**  
+*Lines 6–7:*
 ```typescript
-setMetalPrices(extractedPrices);
-// ...
-setError(err instanceof Error ? err.message : "An error occurred");
-// ...
-setLoading(false);
+  Users,
+  Package,
 ```
+These icons were imported for the now-removed Users and Products menu items but were never cleaned up. They do not cause a runtime bug (ESLint's `no-unused-vars` is disabled here), but they are misleading and add dead code.
+
 **Fix Options:**
-1. Use `@tanstack/react-query` (which is already configured in this project's `App.tsx`) via `useQuery` to handle fetching. It natively manages unmounting, polling (via `refetchInterval`), caching, and loading states without manual `useEffect` bugs.
-2. Use an `AbortController` inside the `useEffect` to abort the `fetchPrices` request in the cleanup function.
-3. Introduce an `isMounted` boolean flag inside the `useEffect` that gets set to `false` in the cleanup function, preventing state updates if `isMounted` is false.
+1. Remove `Users` and `Package` from the import statement.
+2. (If ESLint `no-unused-vars` is enabled in future) — the build will fail; removing them now prevents that breakage.
+3. Add an explicit lint ignore comment if they are intentionally kept for future use.
+
+---
+
+## 2. `src/pages/Reports.tsx`
+
+**Unused imports — `Card`, `CardContent`, `CardDescription`, `CardHeader`, `CardTitle` are imported but not used in the `information` tab.**  
+*Line 1:*
+```typescript
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+```
+After the MrkPricesCard was dropped into the `information` tab, the Card primitives are only used in the `activity` tab. This is not a bug, but if `Card` were accidentally removed, it would break the `activity` tab silently.
+
+**Fix Options:**
+1. Keep as-is (the imports are needed by the `activity` tab — this is only worth noting).
+2. No action required if the card imports are genuinely used in the activity tab (they are — no change needed; disregard this finding).
+
+> **Note:** On closer inspection, `Card`, `CardContent`, `CardDescription`, `CardHeader`, `CardTitle` _are_ used in the `activity` tab (lines 28–36). **No issue here — this finding is a false positive.**
+
+---
+
+## No High-Severity Issues Found
+
+The recent structural changes (routing, page creation, sidebar link additions) are clean. No bugs, security issues, performance problems, or breaking changes were identified in this review pass.

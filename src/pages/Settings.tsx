@@ -83,7 +83,7 @@ export default function SettingsPage() {
                   <SelectContent>
                     <SelectItem value="overview">Overview</SelectItem>
                     <SelectItem value="analytics">Analytics</SelectItem>
-                    <SelectItem value="tools">Reports</SelectItem>
+                    <SelectItem value="tools">Tools</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

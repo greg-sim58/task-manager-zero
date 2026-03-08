@@ -3,8 +3,6 @@ import {
   BarChart3,
   Wrench,
   Settings,
-  Users,
-  Package,
   HelpCircle,
   LogOut,
   Menu,
@@ -31,10 +29,9 @@ const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Tasks", url: "/tasks", icon: BarChart3 },
   { title: "Tools", url: "/tools", icon: Wrench },
+  { title: "Reports", url: "/reports", icon: BarChart3 },
   { title: "Calendar", url: "/calendar", icon: Calendar },
   { title: "Settings", url: "/settings", icon: Settings },
-  { title: "Users", url: "/users", icon: Users },
-  { title: "Products", url: "/products", icon: Package },
   { title: "Support", url: "/support", icon: HelpCircle },
 ];
 

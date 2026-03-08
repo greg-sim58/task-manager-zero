@@ -17,7 +17,7 @@ const actions = [
   },
   {
     icon: BarChart3,
-    label: "View Reports",
+    label: "View Tools",
     bgColor: "bg-[hsl(var(--conversion-bg))]",
     iconColor: "text-[hsl(var(--conversion-icon))]",
   },
