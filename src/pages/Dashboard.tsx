@@ -402,7 +402,7 @@ export default function Dashboard() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold mb-2">
-            {greeting}, {userName}
+            {greeting}, {userName.toUpperCase()}
           </h1>
           <p className="text-sm text-muted-foreground flex items-center gap-2">
             <CalendarIcon className="h-4 w-4" />
