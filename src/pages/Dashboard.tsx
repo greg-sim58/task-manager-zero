@@ -33,6 +33,8 @@ interface Task {
   description: string | null;
   created_at: string;
   status: string;
+  parent_id: string | null;
+  childCount: number;
 }
 
 interface Event {
@@ -114,14 +116,45 @@ export default function Dashboard() {
 
   const fetchRecentTasks = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch parent tasks
+      const { data: parentTasks, error } = await supabase
         .from("tasks")
-        .select("id, title, description, created_at, status")
+        .select("id, title, description, created_at, status, parent_id")
+        .is("parent_id", null)
         .order("created_at", { ascending: false })
         .limit(3);
 
       if (error) throw error;
-      setRecentTasks(data || []);
+
+      if (!parentTasks || parentTasks.length === 0) {
+        setRecentTasks([]);
+        return;
+      }
+
+      // Fetch child task counts for each parent
+      const parentIds = parentTasks.map(t => t.id);
+      const { data: childCounts, error: countError } = await supabase
+        .from("tasks")
+        .select("parent_id")
+        .in("parent_id", parentIds);
+
+      if (countError) throw countError;
+
+      // Count children per parent
+      const countMap: Record<string, number> = {};
+      (childCounts || []).forEach(child => {
+        if (child.parent_id) {
+          countMap[child.parent_id] = (countMap[child.parent_id] || 0) + 1;
+        }
+      });
+
+      // Merge counts into tasks
+      const tasksWithCounts: Task[] = parentTasks.map(task => ({
+        ...task,
+        childCount: countMap[task.id] || 0
+      }));
+
+      setRecentTasks(tasksWithCounts);
     } catch (error) {
       toast({
         title: "Error",
@@ -432,7 +465,14 @@ export default function Dashboard() {
             {recentTasks.length > 0 ? (
               recentTasks.map((task) => (
                 <div key={task.id} className="space-y-1">
-                  <h4 className="text-sm font-medium">{task.title}</h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium">{task.title}</h4>
+                    {task.childCount > 0 && (
+                      <Badge variant="secondary" className="text-xs">
+                        {task.childCount} subtask{task.childCount !== 1 ? 's' : ''}
+                      </Badge>
+                    )}
+                  </div>
                   {task.description && (
                     <p className="text-xs text-muted-foreground line-clamp-2">
                       {task.description}
