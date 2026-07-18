@@ -7,6 +7,7 @@ import { Bell, User, Moon, Sun } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { useTheme } from "next-themes";
+import { APP_VERSION } from "@/lib/version";
 
 export function DashboardLayout() {
   const navigate = useNavigate();
@@ -55,6 +56,7 @@ export function DashboardLayout() {
               )}
             </div>
             <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground mr-1">v{APP_VERSION}</span>
               <Button
                 variant="ghost"
                 size="icon"
