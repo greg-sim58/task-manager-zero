@@ -1,0 +1,30 @@
+# MRK WooCommerce API Integration Plan
+
+The goal is to fetch MRK metal prices and display them as a new card on the "Tools" page (`src/pages/Reports.tsx`), while keeping the existing metal prices on the Dashboard untouched.
+
+## Proposed Changes
+
+### 1. Create a `MrkPricesCard.tsx` component
+Create a new component (`src/components/MrkPricesCard.tsx`) to fetch and display the prices.
+- It will fetch data directly from `https://www.mrk.co.za/wp-json/wc/store/v1/products?per_page=100`.
+- It will parse the JSON response, filtering or searching for specific products (e.g., "1 OZ Gold Krugerrand", "1 OZ Silver Krugerrand"). 
+- Extract the prices (dividing by 100 since WooCommerce stores price in cents) and format them as Rands (ZAR).
+- Display a small table or list mimicking the clean UI of the existing dashboard.
+
+> [!NOTE]
+> If direct frontend fetching fails due to CORS policies on the MRK server, we will pivot to creating a new Supabase Edge Function (`get-mrk-prices`) to act as a proxy.
+
+### 2. Update `Tools` Page (`src/pages/Reports.tsx`)
+- Import and render the `MrkPricesCard` alongside the existing tools grid.
+- We will likely place the card above or next to the productivity tools grid so it's clearly visible.
+
+## Verification Plan
+
+### Automated Tests
+* N/A
+
+### Manual Verification
+1. Open the "Tools" page (which is at `/tools`).
+2. Verify that the new **MRK Precious Metals** card is visible.
+3. Validate that the fetch completes successfully and displays accurate ZAR prices.
+4. Go to the Dashboard and verify the original metal prices still work.

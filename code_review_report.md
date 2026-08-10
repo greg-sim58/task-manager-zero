@@ -1,79 +1,45 @@
-# Code Review Report (Pass 2)
+# Code Review Report
 
-## 1. Security: Implicit Reliance on RLS (Tasks)
-**Severity:** High
-**File:** `src/pages/Tasks.tsx`
-**Lines:** 75-78
+## Scope
 
-```tsx
-const { data, error } = await supabase
-  .from("tasks")
-  .select("*")
-  .order("created_at", { ascending: false });
+Recent changes to: `AppSidebar.tsx`, `App.tsx`, `Tools.tsx`, `Reports.tsx`.
+
+---
+
+## 1. `src/components/AppSidebar.tsx`
+
+**Dead imports — `Users` and `Package` are no longer used.**  
+*Lines 6–7:*
+```typescript
+  Users,
+  Package,
 ```
+These icons were imported for the now-removed Users and Products menu items but were never cleaned up. They do not cause a runtime bug (ESLint's `no-unused-vars` is disabled here), but they are misleading and add dead code.
 
-**Issue:**
-The query selects all tasks without an explicit `.eq('user_id', user.id)` filter. It relies entirely on Row Level Security (RLS) policies. If RLS is disabled or misconfigured (e.g., during a migration or debugging session), this query will leak every user's tasks to any authenticated user.
+**Fix Options:**
+1. Remove `Users` and `Package` from the import statement.
+2. (If ESLint `no-unused-vars` is enabled in future) — the build will fail; removing them now prevents that breakage.
+3. Add an explicit lint ignore comment if they are intentionally kept for future use.
 
-**Suggested Fixes:**
-1.  Get the current user's ID from the session and add `.eq('user_id', session.user.id)` to the query chain.
-2.  Ensure RLS is enabled on the `tasks` table in Supabase.
+---
 
-## 2. Security: Implicit Reliance on RLS (Events)
-**Severity:** High
-**File:** `src/pages/Dashboard.tsx`
-**Lines:** 75-81
+## 2. `src/pages/Reports.tsx`
 
-```tsx
-const { data: events } = await supabase
-  .from("events")
-  .select("title, date, time")
-  // ...
+**Unused imports — `Card`, `CardContent`, `CardDescription`, `CardHeader`, `CardTitle` are imported but not used in the `information` tab.**  
+*Line 1:*
+```typescript
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 ```
+After the MrkPricesCard was dropped into the `information` tab, the Card primitives are only used in the `activity` tab. This is not a bug, but if `Card` were accidentally removed, it would break the `activity` tab silently.
 
-**Issue:**
-Similar to the Tasks issue, the Dashboard fetches upcoming events without filtering by user. This potentially exposes one user's calendar events to another if RLS is not strictly enforced.
+**Fix Options:**
+1. Keep as-is (the imports are needed by the `activity` tab — this is only worth noting).
+2. No action required if the card imports are genuinely used in the activity tab (they are — no change needed; disregard this finding).
 
-**Suggested Fixes:**
-1.  Add `.eq('user_id', session.user.id)` to the query.
+> **Note:** On closer inspection, `Card`, `CardContent`, `CardDescription`, `CardHeader`, `CardTitle` _are_ used in the `activity` tab (lines 28–36). **No issue here — this finding is a false positive.**
 
-## 3. Security/Performance: Insecure Realtime Subscription
-**Severity:** Medium
-**File:** `src/pages/Dashboard.tsx`
-**Lines:** 28-41
+---
 
-```tsx
-supabase
-  .channel('events-changes')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, ...)
-```
+## No High-Severity Issues Found
 
-**Issue:**
-The realtime subscription listens to *all* changes on the `events` table.
-1.  **Security**: If RLS doesn't apply to Realtime (it requires specific setup in Supabase called "Replica Identity" and "Enable RLS for Realtime"), a user might receive events belonging to others.
-2.  **Performance**: The client receives a websocket message for *every* event created by *any* user, wasting bandwidth and client CPU filtering irrelevant events.
-
-**Suggested Fixes:**
-1.  Add a filter to the subscription: `filter: 'user_id=eq.' + user.id`.
-```tsx
-.on('postgres_changes', 
-  { event: '*', schema: 'public', table: 'events', filter: `user_id=eq.${user.id}` }, 
-  callback
-)
-```
-
-## 4. Stability: Exchange Rate API Reliability
-**Severity:** Low (External Dependency)
-**File:** `src/pages/Dashboard.tsx`
-**Lines:** 85
-
-```tsx
-fetch("https://api.exchangerate-api.com/v4/latest/ZAR")
-```
-
-**Issue:**
-This is a free, public API endpoint. If it goes down or introduces rate limits, the Dashboard will show "Loading rates..." indefinitely or error out.
-
-**Suggested Fixes:**
-1.  Cache the result in `localStorage` or `sessionStorage` for 24 hours to reduce API calls and provide offline support.
-2.  Add a timeout to the fetch request to prevent hanging.
+The recent structural changes (routing, page creation, sidebar link additions) are clean. No bugs, security issues, performance problems, or breaking changes were identified in this review pass.

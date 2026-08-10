@@ -83,7 +83,7 @@ export default function SettingsPage() {
                   <SelectContent>
                     <SelectItem value="overview">Overview</SelectItem>
                     <SelectItem value="analytics">Analytics</SelectItem>
-                    <SelectItem value="reports">Reports</SelectItem>
+                    <SelectItem value="tools">Tools</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -102,9 +102,9 @@ export default function SettingsPage() {
                   <Label>Dark Mode</Label>
                   <p className="text-sm text-muted-foreground">Toggle the application's theme.</p>
                 </div>
-                <Switch 
-                  checked={theme === "dark"} 
-                  onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")} 
+                <Switch
+                  checked={theme === "dark"}
+                  onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
                 />
               </div>
             </CardContent>

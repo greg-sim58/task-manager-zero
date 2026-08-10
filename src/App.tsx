@@ -7,11 +7,10 @@ import { ThemeProvider } from "next-themes";
 import { DashboardLayout } from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
+import Tools from "./pages/Tools";
 import Reports from "./pages/Reports";
 import Calendar from "./pages/Calendar";
 import Settings from "./pages/Settings";
-import Users from "./pages/Users";
-import Products from "./pages/Products";
 import Support from "./pages/Support";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -31,11 +30,10 @@ const App = () => (
             <Route element={<DashboardLayout />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/tasks" element={<Tasks />} />
+              <Route path="/tools" element={<Tools />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/settings" element={<Settings />} />
-              <Route path="/users" element={<Users />} />
-              <Route path="/products" element={<Products />} />
               <Route path="/support" element={<Support />} />
             </Route>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Outlet } from "react-router-dom";
+import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,11 @@ import { Bell, User, Moon, Sun } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { useTheme } from "next-themes";
+import { APP_VERSION } from "@/lib/version";
 
 export function DashboardLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [session, setSession] = useState<Session | null>(null);
   const { theme, setTheme } = useTheme();
 
@@ -49,9 +51,12 @@ export function DashboardLayout() {
           <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
             <SidebarTrigger />
             <div className="flex-1">
-              <h1 className="text-2xl font-bold">Dashboard Overview</h1>
+              {location.pathname !== "/" && location.pathname !== "/dashboard" && (
+                <h1 className="text-2xl font-bold">Dashboard Overview</h1>
+              )}
             </div>
             <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground mr-1">v{APP_VERSION}</span>
               <Button
                 variant="ghost"
                 size="icon"
