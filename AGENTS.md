@@ -41,28 +41,32 @@ src/
 ├── index.css                  # Global styles + CSS variables
 ├── components/
 │   ├── ui/                    # shadcn/ui primitives (DO NOT EDIT MANUALLY)
-│   ├── AppSidebar.tsx         # Navigation sidebar
-│   ├── DashboardLayout.tsx    # Auth-gated layout wrapper
-│   ├── KPICard.tsx            # Reusable KPI card component
-│   ├── QuickActions.tsx       # Dashboard quick actions
-│   ├── RecentActivity.tsx     # Dashboard recent activity
+│   ├── AppSidebar.tsx        # Navigation sidebar
+│   ├── DashboardLayout.tsx   # Auth-gated layout wrapper
+│   ├── KPICard.tsx            # Reusable KPI card (variant: revenue|users|orders|conversion)
+│   ├── RecentActivity.tsx    # Task list — displays "todo" tasks sorted by priority
+│   ├── Notes.tsx             # Notes list — shows tasks where description is not null
+│   ├── QuickActions.tsx      # Placeholder actions (4-button grid)
+│   ├── TaskDetailsSidebar.tsx # Task detail drawer (slide-over)
+│   ├── TaskRow.tsx            # Task table row component
+│   ├── MrkPricesCard.tsx      # Precious metals pricing widget
 │   └── RecurringEventDialog.tsx
 ├── hooks/
-│   ├── use-mobile.tsx         # Responsive breakpoint hook
-│   └── use-toast.ts           # Toast notifications
+│   ├── use-mobile.tsx        # Responsive breakpoint hook
+│   └── use-toast.ts          # Toast notifications (sonner-based)
 ├── integrations/
 │   └── supabase/
-│       ├── client.ts          # Supabase client (auto-generated, do not edit)
-│       └── types.ts           # Database types (auto-generated, do not edit)
+│       ├── client.ts         # Supabase client (auto-generated, do not edit)
+│       └── types.ts          # Database types (auto-generated, do not edit)
 ├── lib/
-│   └── utils.ts               # cn() utility for Tailwind class merging
-├── pages/                     # Route-level page components
+│   └── utils.ts              # cn() utility for Tailwind class merging
+├── pages/
 │   ├── Auth.tsx, Dashboard.tsx, Tasks.tsx, Calendar.tsx
 │   ├── Settings.tsx, Reports.tsx
 │   └── Users.tsx, Products.tsx, Support.tsx  # Placeholder pages
 supabase/
-├── config.toml                # Supabase project config
-└── migrations/                # SQL migrations (3 files)
+├── config.toml               # Supabase project config
+└── migrations/               # SQL migrations (3 files)
 ```
 
 ## Path Aliases
@@ -216,11 +220,17 @@ try {
 
 ### Database
 
-Two tables with RLS (Row Level Security) enabled:
-- **tasks**: id, user_id, title, description, status, priority, due_date, created_at, updated_at
-- **events**: id, user_id, title, description, date, time, duration, category, color, is_recurring, parent_event_id, recurrence_*, created_at, updated_at
+One table with RLS (Row Level Security) enabled:
+- **tasks**: id, user_id, title, description, status (todo|in_progress|done), priority (low|medium|high), due_date, created_at, updated_at, parent_id, position, ai_generated
 
-All tables have `updated_at` triggers. RLS policies restrict all CRUD to `auth.uid() = user_id`.
+RLS policies restrict all CRUD to `auth.uid() = user_id`.
+
+**Note:** `events` table was removed from Supabase types. `Dashboard.tsx` mocks calendar data (no live fetch).
+
+### Edge Cases
+
+- **Metal prices**: Uses `supabase.functions.invoke('get-metal-prices')` in `Dashboard.tsx`
+- **Weather**: Uses browser geolocation + Open-Meteo API + Nominatim reverse geocoding (cached locally)
 
 ### Environment Variables
 
@@ -237,6 +247,12 @@ VITE_SUPABASE_PUBLISHABLE_KEY=...
 - React hooks and react-refresh plugins enabled
 - No Prettier config (use editor defaults or add one)
 
+### Diagnostics
+
+- **Primary diagnostics source**: Biome LSP (via editor) — catches errors before `npm run lint`
+- `npm run lint` runs ESLint separately — both may report different issues
+- Run both for full coverage, but fix LSP errors first
+
 ### Do NOT
 
 - Edit files in `src/components/ui/` — these are shadcn/ui generated
@@ -244,3 +260,10 @@ VITE_SUPABASE_PUBLISHABLE_KEY=...
 - Use `any` types unless matching existing patterns (codebase is lenient on this)
 - Add new dependencies without justification
 - Modify Supabase migrations after they've been applied — create new ones instead
+
+### StrictNullChecks Off Impact
+
+- `strictNullChecks: false` means `null` and `undefined` are assignable to any type without error
+- Code can look like `task.description?.length` or `task.description &&` — both patterns coexist
+- Don't add defensive `!` casts or unnecessary null guards just because a value *could* be null
+- Only guard when the codebase actually checks (e.g., the Dashboard does `if (!user)` check)
