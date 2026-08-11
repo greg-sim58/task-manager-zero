@@ -8,6 +8,14 @@ export const taskSchema = z.object({
   due_date: z.string().optional().default(""),
 });
 
+export const projectSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(200, "Name must be under 200 characters"),
+  description: z.string().max(1000, "Description must be under 1000 characters").optional().default(""),
+  status: z.enum(["active", "on_hold", "completed", "archived"]).default("active"),
+  color: z.string().optional().default(""),
+  due_date: z.string().optional().default(""),
+});
+
 export const eventSchema = z.object({
   title: z.string().trim().min(1, "Title is required").max(200, "Title must be under 200 characters"),
   description: z.string().max(1000, "Description must be under 1000 characters").optional().default(""),

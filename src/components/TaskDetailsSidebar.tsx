@@ -12,6 +12,11 @@ import { Task } from "./TaskRow";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 
+interface ProjectOption {
+    id: string;
+    name: string;
+}
+
 interface TaskDetailsSidebarProps {
     task: Task | null;
     isOpen: boolean;
@@ -33,8 +38,10 @@ export function TaskDetailsSidebar({
         status: "todo" as Task["status"],
         priority: "medium" as Task["priority"],
         due_date: "",
+        project_id: "" as string,
     });
     const [subtasks, setSubtasks] = useState<Task[]>([]);
+    const [projects, setProjects] = useState<ProjectOption[]>([]);
     const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
     const [isUpdating, setIsUpdating] = useState(false);
     const [isBreakingDown, setIsBreakingDown] = useState(false);
@@ -46,11 +53,26 @@ export function TaskDetailsSidebar({
                 description: task.description || "",
                 status: task.status,
                 priority: task.priority,
-                due_date: task.due_date || "",
+                due_date: task.due_date ? task.due_date.slice(0, 10) : "",
+                project_id: task.project_id || "",
             });
             fetchSubtasks();
+            fetchProjects();
         }
     }, [task]);
+
+    const fetchProjects = async () => {
+        const { data, error } = await supabase
+            .from("projects")
+            .select("id, name")
+            .order("name", { ascending: true });
+
+        if (error) {
+            console.error("Error fetching projects:", error);
+        } else {
+            setProjects(data || []);
+        }
+    };
 
     const fetchSubtasks = async () => {
         if (!task) return;
@@ -71,19 +93,32 @@ export function TaskDetailsSidebar({
         if (!task) return;
         setIsUpdating(true);
         try {
-            const { error } = await supabase
+            const payload = {
+                title: formData.title,
+                description: formData.description,
+                status: formData.status,
+                priority: formData.priority,
+                due_date: formData.due_date || null,
+                project_id: formData.project_id || null,
+            };
+
+            const { data, error } = await supabase
                 .from("tasks")
-                .update({
-                    ...formData,
-                    due_date: formData.due_date || null,
-                })
-                .eq("id", task.id);
+                .update(payload)
+                .eq("id", task.id)
+                .select("id, project_id")
+                .maybeSingle();
 
             if (error) throw error;
+            if (!data) {
+                throw new Error("Task was not updated. You may not have permission to edit it.");
+            }
 
             toast({
                 title: "Success",
-                description: "Task updated successfully",
+                description: formData.project_id
+                    ? "Task updated and assigned to project"
+                    : "Task updated successfully",
             });
             onUpdate();
         } catch (error: any) {
@@ -263,6 +298,31 @@ export function TaskDetailsSidebar({
                                 <SelectItem value="todo">To Do</SelectItem>
                                 <SelectItem value="in_progress">In Progress</SelectItem>
                                 <SelectItem value="done">Done</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label className="text-sm font-medium text-muted-foreground">Project</Label>
+                        <Select
+                            value={formData.project_id || "none"}
+                            onValueChange={(value) =>
+                                setFormData({
+                                    ...formData,
+                                    project_id: value === "none" ? "" : value,
+                                })
+                            }
+                        >
+                            <SelectTrigger className="bg-muted/30 border-none focus:ring-1 h-10">
+                                <SelectValue placeholder="No project" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">No project</SelectItem>
+                                {projects.map((p) => (
+                                    <SelectItem key={p.id} value={p.id}>
+                                        {p.name}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>

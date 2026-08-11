@@ -13,6 +13,7 @@ export interface Task {
     due_date: string | null;
     created_at: string;
     parent_id: string | null;
+    project_id: string | null;
     user_id: string;
     ai_generated: boolean;
     position: number;

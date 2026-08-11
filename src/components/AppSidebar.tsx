@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  FolderKanban,
   BarChart3,
   Wrench,
   Settings,
@@ -27,6 +28,7 @@ import { toast } from "@/hooks/use-toast";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Projects", url: "/projects", icon: FolderKanban },
   { title: "Tasks", url: "/tasks", icon: BarChart3 },
   { title: "Tools", url: "/tools", icon: Wrench },
   { title: "Reports", url: "/reports", icon: BarChart3 },
@@ -76,7 +78,7 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
-                      end
+                      end={item.url === "/"}
                       className={({ isActive }) =>
                         isActive
                           ? "bg-sidebar-accent text-sidebar-primary font-medium"
