@@ -4,6 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import { TaskRow, Task } from "@/components/TaskRow";
 import { TaskDetailsSidebar } from "@/components/TaskDetailsSidebar";
@@ -37,6 +47,8 @@ export default function ProjectDetail() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (projectId) {
@@ -164,20 +176,29 @@ export default function ProjectDetail() {
     }
   };
 
-  const handleDeleteTask = async () => {
-    if (!selectedTask) return;
-    if (!confirm("Are you sure you want to delete this task?")) return;
+  const requestDeleteTask = (task?: Task) => {
+    const target = task ?? selectedTask;
+    if (!target) return;
+    setTaskToDelete(target);
+  };
 
+  const confirmDeleteTask = async () => {
+    if (!taskToDelete) return;
+
+    setIsDeleting(true);
     try {
-      const { error } = await supabase.from("tasks").delete().eq("id", selectedTask.id);
+      const { error } = await supabase.from("tasks").delete().eq("id", taskToDelete.id);
       if (error) throw error;
 
       toast({
         title: "Success",
         description: "Task deleted successfully",
       });
-      setSidebarOpen(false);
-      setSelectedTask(null);
+      if (selectedTask?.id === taskToDelete.id) {
+        setSidebarOpen(false);
+        setSelectedTask(null);
+      }
+      setTaskToDelete(null);
       fetchTasks();
     } catch (error: any) {
       toast({
@@ -185,6 +206,8 @@ export default function ProjectDetail() {
         description: error.message || "Unable to delete task.",
         variant: "destructive",
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -288,6 +311,7 @@ export default function ProjectDetail() {
               }}
               isExpanded={expandedTasks.has(task.id)}
               onToggleExpand={() => toggleExpand(task.id)}
+              onDelete={requestDeleteTask}
             />
           ))}
         </div>
@@ -301,8 +325,39 @@ export default function ProjectDetail() {
           setSelectedTask(null);
         }}
         onUpdate={fetchTasks}
-        onDelete={handleDeleteTask}
+        onDelete={() => requestDeleteTask()}
       />
+
+      <AlertDialog
+        open={!!taskToDelete}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) setTaskToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete task</AlertDialogTitle>
+            <AlertDialogDescription>
+              {taskToDelete
+                ? `Are you sure you want to delete “${taskToDelete.title}”? This cannot be undone.`
+                : "Are you sure you want to delete this task? This cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDeleteTask();
+              }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
