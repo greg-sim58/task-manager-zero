@@ -1,269 +1,146 @@
 # AGENTS.md — Task Zero
 
-## Project Overview
+React 18 + TypeScript + Vite dashboard app with Supabase backend (PostgreSQL, Auth, Realtime). UI via shadcn/ui + Tailwind. State via TanStack Query. Forms via React Hook Form + Zod.
 
-React 18 + TypeScript + Vite dashboard app with Supabase backend (PostgreSQL, Auth, Realtime). UI built with shadcn/ui + Tailwind CSS + Radix UI primitives. State via TanStack Query. Forms via React Hook Form + Zod.
-
-## Build / Lint / Test Commands
+## Commands
 
 ```bash
-npm run dev          # Start dev server (Vite, port 8080)
-npm run build        # Production build (vite build)
-npm run build:dev    # Development build (vite build --mode development)
-npm run lint         # ESLint across all .ts/.tsx files
-npm run preview      # Preview production build
+npm run dev          # Vite dev server on port 8080 (host "::")
+npm run build        # ⚠️ runs scripts/bump-version.mjs FIRST, then vite build
+npm run build:dev    # same — bumps version, builds in development mode
+npm run lint         # ESLint (flat config) over **/*.{ts,tsx}
+npm run preview      # serve dist/
 ```
 
-**No test framework is configured.** There are no test scripts, no test runner, no test files. If adding tests, choose Vitest (already Vite-native) and configure in `vite.config.ts`.
+### `npm run build` auto-bumps the version
 
-## Tech Stack
+`scripts/bump-version.mjs` runs **before** `vite build` on both `build` and `build:dev`. It:
+- increments the patch version in `package.json`
+- rewrites `src/lib/version.ts` (which exports `APP_VERSION`)
 
-| Layer          | Technology                                      |
-|----------------|------------------------------------------------|
-| Framework      | React 18.3 + TypeScript 5.8                    |
-| Bundler        | Vite 5 + SWC (via @vitejs/plugin-react-swc)    |
-| UI Components  | shadcn/ui (default style, slate base color)     |
-| Styling        | Tailwind CSS 3 + CSS variables for theming      |
-| Backend        | Supabase (PostgreSQL + Auth + Realtime)         |
-| State          | TanStack React Query 5                          |
-| Forms          | React Hook Form 7 + Zod 3                       |
-| Routing        | React Router DOM 6                              |
-| Icons          | lucide-react                                    |
-| Date utils     | date-fns                                        |
-| Charts         | Recharts                                        |
+So a successful build always leaves a modified `package.json` and `src/lib/version.ts` in your working tree. Do not commit those accidentally, and don't manually edit `src/lib/version.ts` — it is generated.
 
-## Project Structure
+### No test framework
 
-```
-src/
-├── App.tsx                    # Root: providers, routing
-├── main.tsx                   # Entry point
-├── index.css                  # Global styles + CSS variables
-├── components/
-│   ├── ui/                    # shadcn/ui primitives (DO NOT EDIT MANUALLY)
-│   ├── AppSidebar.tsx        # Navigation sidebar
-│   ├── DashboardLayout.tsx   # Auth-gated layout wrapper
-│   ├── KPICard.tsx            # Reusable KPI card (variant: revenue|users|orders|conversion)
-│   ├── RecentActivity.tsx    # Task list — displays "todo" tasks sorted by priority
-│   ├── Notes.tsx             # Notes list — shows tasks where description is not null
-│   ├── QuickActions.tsx      # Placeholder actions (4-button grid)
-│   ├── TaskDetailsSidebar.tsx # Task detail drawer (slide-over)
-│   ├── TaskRow.tsx            # Task table row component
-│   ├── MrkPricesCard.tsx      # Precious metals pricing widget
-│   └── RecurringEventDialog.tsx
-├── hooks/
-│   ├── use-mobile.tsx        # Responsive breakpoint hook
-│   └── use-toast.ts          # Toast notifications (sonner-based)
-├── integrations/
-│   └── supabase/
-│       ├── client.ts         # Supabase client (auto-generated, do not edit)
-│       └── types.ts          # Database types (auto-generated, do not edit)
-├── lib/
-│   └── utils.ts              # cn() utility for Tailwind class merging
-├── pages/
-│   ├── Auth.tsx, Dashboard.tsx, Tasks.tsx, Calendar.tsx
-│   ├── Settings.tsx, Reports.tsx
-│   └── Users.tsx, Products.tsx, Support.tsx  # Placeholder pages
-supabase/
-├── config.toml               # Supabase project config
-└── migrations/               # SQL migrations (3 files)
-```
+No test scripts, no runner, no test files. If adding tests, pick Vitest (already Vite-native) and wire it into `vite.config.ts`.
 
-## Path Aliases
+## Tech stack (versions that matter)
+
+- **Vite 8** + `@vitejs/plugin-react-swc` (SWC, not Babel — affects plugin choices)
+- React 18.3, TypeScript 5.8, React Router 6, TanStack Query 5
+- Tailwind 3 + CSS variables for theming; dark mode via `next-themes` (`class` strategy)
+- shadcn/ui (default style, slate base color)
+
+## Path alias
 
 ```
 @/* → ./src/*
 ```
 
-Configured in `tsconfig.json` and `vite.config.ts`. Always use `@/` for imports from src.
+Configured in both `tsconfig.json` and `vite.config.ts`. Always use `@/` for imports from `src`.
 
-## Code Style
+## TypeScript is permissive
 
-### TypeScript Configuration
+`strict: false`, `strictNullChecks: false`, `noImplicitAny: false`, `noUnusedLocals: false`, `noUnusedParameters: false` (see `tsconfig.json` + `tsconfig.app.json`).
 
-- **Strict mode is OFF** (`strict: false` in tsconfig.app.json)
-- `noImplicitAny: false`, `noUnusedLocals: false`, `noUnusedParameters: false`
-- `strictNullChecks: false`
-- Target: ES2020, Module: ESNext, JSX: react-jsx
+Practical impact:
+- `null` / `undefined` are assignable to any type without error.
+- The codebase freely uses `any` in catch blocks and props — match that, don't introduce `unknown` + narrowing unless asked.
+- Don't add defensive `!` casts or null guards just because a value *could* be null. Only guard where the code actually checks (e.g. `Dashboard.tsx` does `if (!user)`).
 
-### Imports — Order Convention
+## Do NOT edit these files
 
-1. React/React DOM imports
-2. Third-party libraries (`@supabase/*`, `@tanstack/*`, `react-router-dom`, `date-fns`, etc.)
-3. Internal UI components (`@/components/ui/*`)
-4. Internal app components (`@/components/*`)
-5. Hooks (`@/hooks/*`)
-6. Integrations (`@/integrations/*`)
-7. Utilities (`@/lib/*`)
-8. Icons (from `lucide-react` — named imports)
-9. Types (inline or from local interfaces)
+- `src/components/ui/**` — shadcn/ui generated primitives.
+- `src/integrations/supabase/client.ts` and `src/integrations/supabase/types.ts` — auto-generated by the Supabase CLI. Regenerate, don't hand-edit.
+- `src/lib/version.ts` — written by `scripts/bump-version.mjs` on every build.
 
-```typescript
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2 } from "lucide-react";
-import { format } from "date-fns";
-```
+## Supabase
 
-### Components
+### Client import (always this path)
 
-- **Pages**: `export default function PageName()` — function declarations, default exports
-- **Shared components**: `export function ComponentName()` — function declarations, named exports
-- **shadcn/ui**: Auto-generated in `src/components/ui/` — do not manually edit these files
-- Use `cn()` from `@/lib/utils` for conditional Tailwind classes
-
-### Props Typing
-
-- Use `interface` for component props, defined immediately above the component:
-
-```typescript
-interface KPICardProps {
-  title: string;
-  value: string;
-  change: string | ReactNode;
-  icon: ReactNode;
-  variant: "revenue" | "users" | "orders" | "conversion";
-}
-
-export function KPICard({ title, value, change, icon, variant }: KPICardProps) {
-```
-
-### Types
-
-- **Local interfaces**: Defined in the same file, above the component
-- **Database types**: Auto-generated in `src/integrations/supabase/types.ts` — do NOT edit
-- Use `interface` for object shapes, `type` for unions/aliases
-- Union literal types for status/priority: `"pending" | "in_progress" | "completed"`
-
-### State Management
-
-- **Server state**: TanStack React Query (QueryClient in App.tsx)
-- **Local state**: `useState` hooks within components
-- **No global state store** (no Context providers, no Zustand/Redux)
-- Auth state managed via `supabase.auth.onAuthStateChange()` in layout components
-
-### Supabase Patterns
-
-**Client import** (always use this path):
 ```typescript
 import { supabase } from "@/integrations/supabase/client";
 ```
 
-**Data fetching** — direct Supabase queries in components (no abstraction layer):
-```typescript
-const { data, error } = await supabase
-  .from("tasks")
-  .select("*")
-  .order("created_at", { ascending: false });
-if (error) throw error;
-```
+### Schema
 
-**Auth check before mutations**:
+Two tables, both with RLS restricting all CRUD to `auth.uid() = user_id`:
+
+- **tasks**: id, user_id, title, description, status (`todo` | `in_progress` | `done`), priority (`low` | `medium` | `high`), due_date, created_at, updated_at, parent_id, position, ai_generated, **project_id** (nullable FK to projects, `ON DELETE SET NULL`)
+- **projects**: id, user_id, name, description, status (`active` | `on_hold` | `completed` | `archived`), color, due_date, position, created_at, updated_at
+
+`events` table also exists in `types.ts` and is queried live by `Calendar.tsx` and `RecentActivity.tsx`.
+
+### Standard patterns
+
+**Auth check before any mutation** (used everywhere — Dashboard, Tasks, Projects, ProjectDetail):
 ```typescript
 const { data: { user } } = await supabase.auth.getUser();
-if (!user) { /* show error toast, return */ }
+if (!user) { toast({ title: "Error", description: "...", variant: "destructive" }); return; }
 ```
 
-**Realtime subscriptions**:
+**try/catch + toast** is the standard error surface; `console.error()` for non-user-facing failures (e.g. background fetches in `Dashboard.tsx`). No global error boundary.
+
+**Auth state** is observed in `src/components/DashboardLayout.tsx` via `supabase.auth.onAuthStateChange()` — that component gates every authenticated route. Unauthenticated users are redirected to `/auth`.
+
+**Realtime** subscriptions follow:
 ```typescript
 const channel = supabase
-  .channel('events-changes')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
-    fetchData();
-  })
+  .channel('table-changes')
+  .on('postgres_changes', { event: '*', schema: 'public', table: '...' }, () => fetchData())
   .subscribe();
 return () => { supabase.removeChannel(channel); };
 ```
 
-### Error Handling
+### Migrations
 
-- **try/catch with toast notifications** — the standard pattern:
-```typescript
-try {
-  const { data, error } = await supabase.from("tasks").select("*");
-  if (error) throw error;
-  // use data
-} catch (error: any) {
-  toast({ title: "Error", description: error.message, variant: "destructive" });
-} finally {
-  setLoading(false);
-}
-```
-- `console.error()` used for non-user-facing errors (e.g., exchange rate fetch)
-- No global error boundary
+Live in `supabase/migrations/` (4 files as of writing). Local migration files are **not** automatically applied to the remote Supabase project — the local Supabase CLI is not linked (`supabase link` not run). To apply schema/RLS changes to the remote DB, paste SQL into the Supabase Dashboard SQL Editor. Do not modify applied migrations; create a new `.sql` file instead.
 
-### Naming Conventions
+### RLS gotcha
 
-| Thing              | Convention            | Example                          |
-|--------------------|-----------------------|----------------------------------|
-| Page components    | PascalCase            | `Dashboard.tsx`, `Tasks.tsx`     |
-| Shared components  | PascalCase            | `KPICard.tsx`, `AppSidebar.tsx`  |
-| UI primitives      | kebab-case            | `button.tsx`, `alert-dialog.tsx` |
-| Hooks              | kebab-case, use-*     | `use-mobile.tsx`, `use-toast.ts` |
-| Utility files      | camelCase             | `utils.ts`                       |
-| Functions          | camelCase             | `fetchTasks`, `handleSubmit`     |
-| Event handlers     | handle* prefix        | `handleEdit`, `handleDelete`     |
-| Boolean state      | is/has prefix         | `isLogin`, `isDialogOpen`        |
-| Constants          | UPPER_SNAKE or camelCase | `EVENT_COLORS`, `menuItems`   |
-| DB columns         | snake_case            | `user_id`, `due_date`            |
+RLS is enabled on both tables. If inserts fail with `new row violates row-level security policy`, the corresponding `WITH CHECK` policy is missing on the remote DB — see `supabase/fix_projects_rls.sql` and `database-tasks/projects-rls-fix.md` for the documented fix pattern.
 
-### Styling
+## App wiring
 
-- Tailwind CSS with CSS custom properties for theming (`hsl(var(--primary))`)
-- shadcn/ui components provide the design system base
-- `cn()` helper for conditional/merged classes
-- Responsive: `md:` and `lg:` breakpoints for grid layouts
-- Dark mode via `next-themes` ThemeProvider with `class` strategy
+- `src/App.tsx` — providers (QueryClient, ThemeProvider, TooltipProvider, Toaster, Sonner) + routes. Auth route is outside `DashboardLayout`; everything else is inside it.
+- `src/components/DashboardLayout.tsx` — auth gate + `<Outlet />`. **Runs `assignOrphanTasks()` once per authenticated session** (guarded by a `useRef`), assigning any `project_id IS NULL` tasks to the user's "Unassigned" project (creating it if missing). See `src/lib/ensureUnassignedProject.ts`.
+- `src/pages/` — page components. Pages use `export default function PageName()`. Shared components use `export function ComponentName()`.
+- Routes: `/`, `/projects`, `/projects/:projectId`, `/tasks`, `/tools`, `/reports`, `/calendar`, `/settings`, `/support`, `/auth`, `*` (NotFound).
+- New tasks created from `/tasks` (Tasks.tsx) default to the "Unassigned" project via `ensureUnassignedProject()`. Tasks created from `ProjectDetail.tsx` get the explicit `project_id` of that project.
 
-### Database
+## Environment
 
-One table with RLS (Row Level Security) enabled:
-- **tasks**: id, user_id, title, description, status (todo|in_progress|done), priority (low|medium|high), due_date, created_at, updated_at, parent_id, position, ai_generated
-
-RLS policies restrict all CRUD to `auth.uid() = user_id`.
-
-**Note:** `events` table was removed from Supabase types. `Dashboard.tsx` mocks calendar data (no live fetch).
-
-### Edge Cases
-
-- **Metal prices**: Uses `supabase.functions.invoke('get-metal-prices')` in `Dashboard.tsx`
-- **Weather**: Uses browser geolocation + Open-Meteo API + Nominatim reverse geocoding (cached locally)
-
-### Environment Variables
-
-Required in `.env` (Vite format with `VITE_` prefix):
+Required in `.env` (Vite format, `VITE_` prefix):
 ```
 VITE_SUPABASE_URL=...
 VITE_SUPABASE_PUBLISHABLE_KEY=...
 ```
+No `.env.example` is committed. `.env` is gitignored.
 
-### ESLint
+## ESLint
 
-- Flat config (`eslint.config.js`) with `typescript-eslint` recommended rules
+Flat config in `eslint.config.js` using `typescript-eslint` recommended. Notable overrides:
 - `@typescript-eslint/no-unused-vars: "off"`
-- React hooks and react-refresh plugins enabled
-- No Prettier config (use editor defaults or add one)
+- `react-refresh/only-export-components: "warn"` (allowConstantExport)
 
-### Diagnostics
+No Prettier configured. The lint output currently contains pre-existing `no-explicit-any` errors across many files — these are not blocking and not your job to clean up unless asked.
 
-- **Primary diagnostics source**: Biome LSP (via editor) — catches errors before `npm run lint`
-- `npm run lint` runs ESLint separately — both may report different issues
-- Run both for full coverage, but fix LSP errors first
+## Diagnostics
 
-### Do NOT
+- **Biome LSP** (via editor) is the primary diagnostics source and catches errors before `npm run lint`. Fix LSP errors first.
+- `npm run lint` runs ESLint separately and may report different issues.
+- There is no `tsc` script and no `typecheck` script — type errors surface via the editor LSP or `npm run build`.
 
-- Edit files in `src/components/ui/` — these are shadcn/ui generated
-- Edit `src/integrations/supabase/client.ts` or `types.ts` — auto-generated
-- Use `any` types unless matching existing patterns (codebase is lenient on this)
-- Add new dependencies without justification
-- Modify Supabase migrations after they've been applied — create new ones instead
+## Conventions worth knowing
 
-### StrictNullChecks Off Impact
+- `cn()` from `@/lib/utils` for conditional Tailwind classes (Tailwind-merge + clsx).
+- Local interfaces for component props, defined immediately above the component.
+- DB columns are `snake_case`; TS field names in `types.ts` mirror them.
+- Event handlers prefixed `handle*`; boolean state prefixed `is`/`has`.
+- Icons: named imports from `lucide-react`.
 
-- `strictNullChecks: false` means `null` and `undefined` are assignable to any type without error
-- Code can look like `task.description?.length` or `task.description &&` — both patterns coexist
-- Don't add defensive `!` casts or unnecessary null guards just because a value *could* be null
-- Only guard when the codebase actually checks (e.g., the Dashboard does `if (!user)` check)
+## When in doubt
+
+- Match existing patterns over introducing new ones (e.g. `any` in catch blocks, direct Supabase queries in components with no abstraction layer).
+- Don't add dependencies without justification.
+- Don't modify applied Supabase migrations — add a new one.

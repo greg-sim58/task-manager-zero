@@ -12,6 +12,7 @@ import {
 import { TaskRow, Task } from "@/components/TaskRow";
 import { TaskDetailsSidebar } from "@/components/TaskDetailsSidebar";
 import { logError } from "@/lib/errorLogger";
+import { ensureUnassignedProject } from "@/lib/ensureUnassignedProject";
 import { isToday, isAfter, parseISO, startOfToday } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -73,10 +74,13 @@ export default function Tasks() {
         return;
       }
 
+      const unassignedId = await ensureUnassignedProject(user.id);
+
       const { error } = await supabase.from("tasks").insert([
         {
           title: newTaskTitle.trim(),
           user_id: user.id,
+          project_id: unassignedId,
           status: "todo",
           priority: "medium",
         },
