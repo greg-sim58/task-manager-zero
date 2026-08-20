@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { ChevronRight, ChevronDown, Circle, CheckCircle2, Calendar } from "lucide-react";
+import { ChevronRight, ChevronDown, Circle, CheckCircle2, Calendar, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -27,6 +26,7 @@ interface TaskRowProps {
     onSelectTask: (task: Task) => void;
     isExpanded?: boolean;
     onToggleExpand?: () => void;
+    onDelete?: (task: Task) => void;
 }
 
 const priorityColors = {
@@ -43,6 +43,7 @@ export function TaskRow({
     onSelectTask,
     isExpanded = false,
     onToggleExpand,
+    onDelete,
 }: TaskRowProps) {
     const hasSubtasks = subtasks.length > 0;
     const isDone = task.status === "done";
@@ -116,6 +117,20 @@ export function TaskRow({
                         </div>
                     </div>
                 </div>
+
+                {onDelete && (
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(task);
+                        }}
+                        className="ml-3 flex-shrink-0 h-8 w-8 inline-flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        aria-label="Delete task"
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </button>
+                )}
             </div>
 
             {hasSubtasks && isExpanded && (
@@ -127,6 +142,7 @@ export function TaskRow({
                             level={level + 1}
                             onToggleStatus={onToggleStatus}
                             onSelectTask={onSelectTask}
+                            onDelete={onDelete}
                         />
                     ))}
                 </div>

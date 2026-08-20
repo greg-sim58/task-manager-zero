@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
@@ -8,17 +8,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { useTheme } from "next-themes";
 import { APP_VERSION } from "@/lib/version";
+import { assignOrphanTasks } from "@/lib/ensureUnassignedProject";
 
 export function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [session, setSession] = useState<Session | null>(null);
   const { theme, setTheme } = useTheme();
+  const hasSweptRef = useRef(false);
 
   useEffect(() => {
     // Check authentication status
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      if (session && !hasSweptRef.current) {
+        hasSweptRef.current = true;
+        await assignOrphanTasks(session.user.id);
+      }
       setSession(session);
       if (!session) {
         navigate("/auth");
@@ -32,6 +38,7 @@ export function DashboardLayout() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (!session) {
+        hasSweptRef.current = false;
         navigate("/auth");
       }
     });

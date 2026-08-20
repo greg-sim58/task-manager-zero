@@ -1,14 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
 import { useTheme } from "next-themes"
+import { supabase } from "@/integrations/supabase/client"
+import { setNotesKey, NOTES_KEY_PATTERN } from "@/lib/notesGate"
+import { Loader2 } from "lucide-react"
 
 export default function SettingsPage() {
   const { toast } = useToast()
@@ -18,12 +22,66 @@ export default function SettingsPage() {
     system: true,
     dataAlerts: true,
   })
+  const [notesKeyInput, setNotesKeyInput] = useState("")
+  const [savingKey, setSavingKey] = useState(false)
 
-  const handleSave = () => {
-    toast({
-      title: "Settings saved",
-      description: "Your preferences have been updated successfully.",
-    })
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase
+        .from("profiles")
+        .select("notes_key")
+        .eq("id", user.id)
+        .maybeSingle()
+      if (data?.notes_key) {
+        setNotesKeyInput("")
+      }
+    }
+    checkAuth()
+  }, [])
+
+  const handleSaveNotesKey = async () => {
+    if (!NOTES_KEY_PATTERN.test(notesKeyInput)) {
+      toast({
+        title: "Invalid key",
+        description: "Key must be at least 4 alphanumeric characters (A-Z, a-z, 0-9).",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setSavingKey(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      const ok = await setNotesKey(user.id, notesKeyInput)
+      if (ok) {
+        toast({
+          title: "Key saved",
+          description: "Your notes access key has been updated.",
+        })
+        setNotesKeyInput("")
+      } else {
+        throw new Error("Failed to save key.")
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Unable to save key.",
+        variant: "destructive",
+      })
+    } finally {
+      setSavingKey(false)
+    }
   }
 
   return (
@@ -170,8 +228,32 @@ export default function SettingsPage() {
               <CardTitle>Data Management</CardTitle>
               <CardDescription>Manage your data and privacy settings</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">Data management features will be available here.</p>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="notes-key">Notes Access Key</Label>
+                <p className="text-sm text-muted-foreground">
+                  Set the key required to access your notes from the Tools page.
+                  Leave a new key to replace the current one.
+                </p>
+                <Input
+                  id="notes-key"
+                  type="password"
+                  value={notesKeyInput}
+                  onChange={(e) => setNotesKeyInput(e.target.value)}
+                  placeholder="At least 4 alphanumeric characters"
+                  autoComplete="off"
+                />
+              </div>
+              <Button
+                onClick={handleSaveNotesKey}
+                disabled={!NOTES_KEY_PATTERN.test(notesKeyInput) || savingKey}
+              >
+                {savingKey ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Save Key"
+                )}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -179,7 +261,14 @@ export default function SettingsPage() {
 
       <div className="flex justify-end gap-3">
         <Button variant="outline">Cancel</Button>
-        <Button onClick={handleSave}>
+        <Button
+          onClick={() =>
+            toast({
+              title: "Settings saved",
+              description: "Your preferences have been updated successfully.",
+            })
+          }
+        >
           Save Changes
         </Button>
       </div>

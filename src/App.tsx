@@ -15,6 +15,7 @@ import Calendar from "./pages/Calendar";
 import Settings from "./pages/Settings";
 import Support from "./pages/Support";
 import Auth from "./pages/Auth";
+import Notes from "./pages/Notes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/projects" element={<Projects />} />
               <Route path="/projects/:projectId" element={<ProjectDetail />} />
               <Route path="/tasks" element={<Tasks />} />
+              <Route path="/notes" element={<Notes />} />
               <Route path="/tools" element={<Tools />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/calendar" element={<Calendar />} />
