@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Markdown } from "@/components/Markdown";
+import { MarkdownEditor } from "@/components/MarkdownEditor";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -255,13 +256,11 @@ export default function Notes() {
 
                 <div className="space-y-2">
                   <Label htmlFor="body">Body</Label>
-                  <Textarea
+                  <MarkdownEditor
                     id="body"
                     value={formData.body}
-                    onChange={(e) =>
-                      setFormData({ ...formData, body: e.target.value })
-                    }
-                    placeholder="Write your note here..."
+                    onChange={(body) => setFormData({ ...formData, body })}
+                    placeholder="Write your note here... (Markdown supported)"
                     rows={5}
                   />
                 </div>
@@ -336,13 +335,14 @@ export default function Notes() {
                         </div>
                         <div className="flex flex-1 flex-col space-y-2">
                           <Label htmlFor={`edit-body-${note.id}`}>Body</Label>
-                          <Textarea
+                          <MarkdownEditor
                             id={`edit-body-${note.id}`}
                             value={editFormData.body}
-                            onChange={(e) =>
-                              setEditFormData({ ...editFormData, body: e.target.value })
+                            onChange={(body) =>
+                              setEditFormData({ ...editFormData, body })
                             }
                             className="flex-1"
+                            textareaClassName="flex-1"
                             rows={6}
                           />
                         </div>
@@ -384,11 +384,7 @@ export default function Notes() {
                     <>
                       <CardHeader className="flex-1 min-h-0 overflow-hidden pb-3">
                         <CardTitle className="text-lg">{note.title}</CardTitle>
-                        {note.body && (
-                          <CardDescription className="line-clamp-4 whitespace-pre-wrap">
-                            {note.body}
-                          </CardDescription>
-                        )}
+                        {note.body && <Markdown content={note.body} className="mt-1.5" />}
                       </CardHeader>
                       <CardContent className="mt-auto flex items-center justify-between text-xs text-muted-foreground">
                         <span>{format(new Date(note.created_at), "MMM dd, yyyy")}</span>
