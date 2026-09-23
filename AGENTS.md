@@ -8,7 +8,7 @@ React 18 + TypeScript + Vite dashboard app with Supabase backend (PostgreSQL, Au
 npm run dev          # Vite dev server on port 8080 (host "::")
 npm run build        # ⚠️ runs scripts/bump-version.mjs FIRST, then vite build
 npm run build:dev    # same — bumps version, builds in development mode
-npm run lint         # ESLint (flat config) over **/*.{ts,tsx}
+npm run lint         # ESLint (flat config, `eslint .`)
 npm run preview      # serve dist/
 ```
 
@@ -64,12 +64,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 ### Schema
 
-Two tables, both with RLS restricting all CRUD to `auth.uid() = user_id`:
+All tables have RLS restricting CRUD to `auth.uid() = user_id`.
 
 - **tasks**: id, user_id, title, description, status (`todo` | `in_progress` | `done`), priority (`low` | `medium` | `high`), due_date, created_at, updated_at, parent_id, position, ai_generated, **project_id** (nullable FK to projects, `ON DELETE SET NULL`)
 - **projects**: id, user_id, name, description, status (`active` | `on_hold` | `completed` | `archived`), color, due_date, position, created_at, updated_at
-
-`events` table also exists in `types.ts` and is queried live by `Calendar.tsx` and `RecentActivity.tsx`.
+- **events**: id, user_id, title, date, time, duration, category, color, recurrence fields, parent_event_id. Queried live by `Calendar.tsx` and `RecentActivity.tsx`.
+- **notes**: id, user_id, title, body, created_at, updated_at. **Not yet in `types.ts`** — `Notes.tsx` defines a local `Note` interface instead. Regenerate types after the remote schema catches up.
+- **profiles**: user_id (PK → auth.users), notes_key, created_at, updated_at. Per-user settings; also missing from `types.ts`.
 
 ### Standard patterns
 
@@ -94,18 +95,19 @@ return () => { supabase.removeChannel(channel); };
 
 ### Migrations
 
-Live in `supabase/migrations/` (4 files as of writing). Local migration files are **not** automatically applied to the remote Supabase project — the local Supabase CLI is not linked (`supabase link` not run). To apply schema/RLS changes to the remote DB, paste SQL into the Supabase Dashboard SQL Editor. Do not modify applied migrations; create a new `.sql` file instead.
+Live in `supabase/migrations/` (5 files as of writing). Local migration files are **not** automatically applied to the remote Supabase project — the local Supabase CLI is not linked (`supabase link` not run). To apply schema/RLS changes to the remote DB, paste SQL into the Supabase Dashboard SQL Editor. Do not modify applied migrations; create a new `.sql` file instead.
 
 ### RLS gotcha
 
-RLS is enabled on both tables. If inserts fail with `new row violates row-level security policy`, the corresponding `WITH CHECK` policy is missing on the remote DB — see `supabase/fix_projects_rls.sql` and `database-tasks/projects-rls-fix.md` for the documented fix pattern.
+RLS is enabled on all tables. If inserts fail with `new row violates row-level security policy`, the corresponding `WITH CHECK` policy is missing on the remote DB — see `supabase/fix_projects_rls.sql` and `database-tasks/projects-rls-fix.md` for the documented fix pattern.
 
 ## App wiring
 
 - `src/App.tsx` — providers (QueryClient, ThemeProvider, TooltipProvider, Toaster, Sonner) + routes. Auth route is outside `DashboardLayout`; everything else is inside it.
 - `src/components/DashboardLayout.tsx` — auth gate + `<Outlet />`. **Runs `assignOrphanTasks()` once per authenticated session** (guarded by a `useRef`), assigning any `project_id IS NULL` tasks to the user's "Unassigned" project (creating it if missing). See `src/lib/ensureUnassignedProject.ts`.
 - `src/pages/` — page components. Pages use `export default function PageName()`. Shared components use `export function ComponentName()`.
-- Routes: `/`, `/projects`, `/projects/:projectId`, `/tasks`, `/tools`, `/reports`, `/calendar`, `/settings`, `/support`, `/auth`, `*` (NotFound).
+- Routes: `/`, `/projects`, `/projects/:projectId`, `/tasks`, `/notes`, `/tools`, `/reports`, `/calendar`, `/settings`, `/support`, `/auth`, `*` (NotFound).
+- **Notes page gate**: `Notes.tsx` redirects to `/tools` unless `sessionStorage.getItem("notes-unlocked") === "1"` — the unlock flow lives in `Tools.tsx`.
 - New tasks created from `/tasks` (Tasks.tsx) default to the "Unassigned" project via `ensureUnassignedProject()`. Tasks created from `ProjectDetail.tsx` get the explicit `project_id` of that project.
 
 ## Environment
@@ -127,8 +129,7 @@ No Prettier configured. The lint output currently contains pre-existing `no-expl
 
 ## Diagnostics
 
-- **Biome LSP** (via editor) is the primary diagnostics source and catches errors before `npm run lint`. Fix LSP errors first.
-- `npm run lint` runs ESLint separately and may report different issues.
+- `npm run lint` runs ESLint (flat config in `eslint.config.js`).
 - There is no `tsc` script and no `typecheck` script — type errors surface via the editor LSP or `npm run build`.
 
 ## Conventions worth knowing
