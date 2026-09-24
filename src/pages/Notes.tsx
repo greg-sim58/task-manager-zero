@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Markdown } from "@/components/Markdown";
+import { MarkdownEditor } from "@/components/MarkdownEditor";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -15,7 +16,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Plus, StickyNote, Loader2 } from "lucide-react";
+import { Plus, StickyNote, Loader2, Trash2, Pencil } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 
 interface Note {
@@ -39,6 +51,8 @@ export default function Notes() {
   const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState({ title: "", body: "" });
   const [savingEdit, setSavingEdit] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (sessionStorage.getItem(NOTES_UNLOCK_KEY) !== "1") {
@@ -170,18 +184,25 @@ export default function Notes() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async () => {
+    if (!noteToDelete) return;
+
+    setDeleting(true);
     try {
-      const { error } = await supabase.from("notes").delete().eq("id", id);
+      const { error } = await supabase.from("notes").delete().eq("id", noteToDelete.id);
       if (error) throw error;
       fetchNotes();
       toast({ title: "Deleted", description: "Note removed." });
+      setNoteToDelete(null);
+      setExpandedNoteId(null);
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "Unable to delete note.",
         variant: "destructive",
       });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -235,13 +256,11 @@ export default function Notes() {
 
                 <div className="space-y-2">
                   <Label htmlFor="body">Body</Label>
-                  <Textarea
+                  <MarkdownEditor
                     id="body"
                     value={formData.body}
-                    onChange={(e) =>
-                      setFormData({ ...formData, body: e.target.value })
-                    }
-                    placeholder="Write your note here..."
+                    onChange={(body) => setFormData({ ...formData, body })}
+                    placeholder="Write your note here... (Markdown supported)"
                     rows={5}
                   />
                 </div>
@@ -292,17 +311,17 @@ export default function Notes() {
                 <Card
                   className={`flex flex-col cursor-pointer select-none transition-all ${
                     isExpanded
-                      ? "absolute left-1/2 top-0 z-30 w-[28rem] -translate-x-1/2 ring-2 ring-primary shadow-xl"
-                      : "hover:bg-accent/30"
+                      ? "fixed left-1/2 top-1/2 z-30 w-[80%] max-w-4xl min-h-[60vh] -translate-x-1/2 -translate-y-1/2 ring-2 ring-primary shadow-xl"
+                      : "h-[180px] hover:bg-accent/30"
                   }`}
                   onDoubleClick={() => !isExpanded && handleEditNote(note)}
                 >
                   {isExpanded ? (
-                    <form onSubmit={handleSaveEdit}>
+                    <form onSubmit={handleSaveEdit} className="flex flex-1 flex-col">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-lg">Edit Note</CardTitle>
                       </CardHeader>
-                      <CardContent className="space-y-4">
+                      <CardContent className="flex flex-1 flex-col gap-4">
                         <div className="space-y-2">
                           <Label htmlFor={`edit-title-${note.id}`}>Title</Label>
                           <Input
@@ -314,14 +333,16 @@ export default function Notes() {
                             autoFocus
                           />
                         </div>
-                        <div className="space-y-2">
+                        <div className="flex flex-1 flex-col space-y-2">
                           <Label htmlFor={`edit-body-${note.id}`}>Body</Label>
-                          <Textarea
+                          <MarkdownEditor
                             id={`edit-body-${note.id}`}
                             value={editFormData.body}
-                            onChange={(e) =>
-                              setEditFormData({ ...editFormData, body: e.target.value })
+                            onChange={(body) =>
+                              setEditFormData({ ...editFormData, body })
                             }
+                            className="flex-1"
+                            textareaClassName="flex-1"
                             rows={6}
                           />
                         </div>
@@ -331,7 +352,7 @@ export default function Notes() {
                             variant="ghost"
                             size="sm"
                             className="text-destructive hover:text-destructive"
-                            onClick={handleCloseEdit}
+                            onClick={() => setNoteToDelete(note)}
                           >
                             Delete
                           </Button>
@@ -361,27 +382,46 @@ export default function Notes() {
                     </form>
                   ) : (
                     <>
-                      <CardHeader className="pb-3">
+                      <CardHeader className="flex-1 min-h-0 overflow-hidden pb-3">
                         <CardTitle className="text-lg">{note.title}</CardTitle>
-                        {note.body && (
-                          <CardDescription className="line-clamp-4 whitespace-pre-wrap">
-                            {note.body}
-                          </CardDescription>
-                        )}
+                        {note.body && <Markdown content={note.body} className="mt-1.5" />}
                       </CardHeader>
                       <CardContent className="mt-auto flex items-center justify-between text-xs text-muted-foreground">
                         <span>{format(new Date(note.created_at), "MMM dd, yyyy")}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(note.id);
-                          }}
-                        >
-                          Delete
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-500/10"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditNote(note);
+                                }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Edit this note</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setNoteToDelete(note);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Delete this note</TooltipContent>
+                          </Tooltip>
+                        </div>
                       </CardContent>
                     </>
                   )}
@@ -391,6 +431,35 @@ export default function Notes() {
           })}
         </div>
       )}
+
+      <AlertDialog
+        open={!!noteToDelete}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setNoteToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete note</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this note? This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
