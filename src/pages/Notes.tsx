@@ -29,6 +29,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
+import { assignNoteIcons } from "@/lib/noteIcons";
+import { assignNoteColors } from "@/lib/noteColors";
 
 interface Note {
   id: string;
@@ -37,6 +39,8 @@ interface Note {
   body: string | null;
   created_at: string;
   updated_at: string;
+  icon?: string;
+  color?: string;
 }
 
 const NOTES_UNLOCK_KEY = "notes-unlocked";
@@ -84,7 +88,7 @@ export default function Notes() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setNotes((data || []) as Note[]);
+      setNotes(assignNoteColors(assignNoteIcons((data || []) as Note[])));
     } catch (error: any) {
       toast({
         title: "Error",
@@ -383,7 +387,12 @@ export default function Notes() {
                   ) : (
                     <>
                       <CardHeader className="flex-1 min-h-0 overflow-hidden pb-3">
-                        <CardTitle className="text-lg">{note.title}</CardTitle>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <span className="text-xl shrink-0">{note.icon}</span>
+                          <span className="truncate" style={{ color: note.color }}>
+                            {note.title}
+                          </span>
+                        </CardTitle>
                         {note.body && <Markdown content={note.body} className="mt-1.5" />}
                       </CardHeader>
                       <CardContent className="mt-auto flex items-center justify-between text-xs text-muted-foreground">
