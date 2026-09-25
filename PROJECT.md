@@ -11,6 +11,7 @@ Key Features Implemented ✅
 - Dashboard: KPI cards with live task stats and currency rates
 - Task Management: Full CRUD with status/priority tracking
 - Calendar: Month/Week/Day views with recurring events
+- Notes: Markdown-aware editor with Write/Preview tabs and a formatting toolbar (bold, italic, headings, lists, quotes, code, links); notes render formatted on cards with delete confirmation
 - Settings: Theme switching and preferences
 - Real-time: Live updates via Supabase subscriptions
 Current Gaps ❌
