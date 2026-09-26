@@ -1,127 +1,145 @@
+@import "@fontsource-variable/bodoni-moda";
+@import "@fontsource-variable/manrope";
+@import "@fontsource-variable/jetbrains-mono";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* ==========================================================================
+   ABYSSAL — design system
+   All colors MUST be HSL. Every token is defined in both :root and .dark so the
+   two themes share one identity instead of diverging into different products.
+   ========================================================================== */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 47.4% 11.2%;
+    --background: 230 30% 97%;
+    --foreground: 230 24% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
+    --card-foreground: 230 24% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
+    --popover-foreground: 230 24% 8%;
 
-    --primary: 217 91% 60%;
+    --primary: 32 90% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 230 20% 92%;
+    --secondary-foreground: 230 24% 10%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 230 20% 92%;
+    --muted-foreground: 230 10% 42%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 230 20% 92%;
+    --accent-foreground: 230 24% 8%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 356 78% 46%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 217 91% 60%;
+    --border: 228 18% 86%;
+    --input: 228 18% 86%;
+    --ring: 186 100% 40%;
 
-    --radius: 2px;
+    /* Electric cyan — data + interactive affordances only, never large fills */
+    --primary-2: 186 100% 34%;
 
-    /* Dashboard specific colors */
-    --revenue-bg: 217 91% 96%;
-    --revenue-icon: 217 91% 60%;
+    --radius: 1.25rem;
 
-    --users-bg: 142 76% 96%;
-    --users-icon: 142 71% 45%;
+    /* Surface tints (replaces the old e-commerce revenue/users/orders set) */
+    --surface-1: 230 24% 94%;
+    --surface-2: 186 40% 92%;
+    --surface-3: 32 60% 92%;
+    --surface-4: 300 40% 93%;
 
-    --orders-bg: 45 93% 96%;
-    --orders-icon: 45 93% 47%;
+    --accent-1: 32 90% 42%;
+    --accent-2: 186 100% 34%;
+    --accent-3: 300 60% 44%;
+    --accent-4: 32 80% 44%;
 
-    --conversion-bg: 262 83% 96%;
-    --conversion-icon: 262 83% 58%;
+    --success: 152 62% 30%;
+    --warning: 32 88% 44%;
+    --danger: 356 78% 46%;
 
-    --success: 142 71% 45%;
-    --warning: 45 93% 47%;
-    --danger: 0 84.2% 60.2%;
-
-    --sidebar-background: 0 0% 99%;
-    --sidebar-foreground: 222.2 47.4% 11.2%;
-    --sidebar-primary: 222.2 47.4% 11.2%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 230 24% 8%;
+    --sidebar-primary: 230 24% 8%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 96.1%;
-    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
-    --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent: 230 20% 92%;
+    --sidebar-accent-foreground: 230 24% 8%;
+    --sidebar-border: 228 18% 86%;
+    --sidebar-ring: 186 100% 40%;
 
-    /* Animations */
-    --transition-base: 150ms ease;
-    --transition-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    /* Elevation — tinted blacks, never flat rgba(0,0,0,·) */
+    --shadow-sm: 0 1px 2px -1px hsl(230 30% 12% / 0.1);
+    --shadow-md: 0 4px 12px -2px hsl(230 30% 12% / 0.12);
+    --shadow-lg: 0 18px 40px -12px hsl(230 30% 12% / 0.2);
+
+    --aurora-opacity: 0.5;
+    --aurora-blur: 80px;
   }
 
   .dark {
-    --background: 24 6% 6%;
-    --foreground: 40 6% 90%;
+    --background: 230 22% 5%;
+    --foreground: 230 20% 96%;
 
-    --card: 24 5% 10%;
-    --card-foreground: 40 6% 90%;
+    --card: 230 20% 8%;
+    --card-foreground: 230 20% 96%;
 
-    --popover: 24 5% 10%;
-    --popover-foreground: 40 6% 90%;
+    --popover: 230 20% 8%;
+    --popover-foreground: 230 20% 96%;
 
-    --primary: 263 70% 58%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 32 100% 58%;
+    --primary-foreground: 230 22% 5%;
 
-    --secondary: 24 5% 14%;
-    --secondary-foreground: 40 6% 90%;
+    --secondary: 230 16% 14%;
+    --secondary-foreground: 230 20% 96%;
 
-    --muted: 24 5% 14%;
-    --muted-foreground: 30 5% 50%;
+    --muted: 230 16% 14%;
+    --muted-foreground: 230 10% 62%;
 
-    --accent: 24 5% 14%;
-    --accent-foreground: 40 6% 90%;
+    --accent: 230 16% 14%;
+    --accent-foreground: 230 20% 96%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 40 6% 90%;
+    --destructive: 356 82% 62%;
+    --destructive-foreground: 230 22% 5%;
 
-    --border: 24 5% 16%;
-    --input: 24 5% 16%;
-    --ring: 263 70% 58%;
+    --border: 230 16% 18%;
+    --input: 230 16% 18%;
+    --ring: 186 100% 50%;
 
-    --revenue-bg: 263 50% 12%;
-    --revenue-icon: 263 70% 58%;
+    --primary-2: 186 100% 50%;
 
-    --users-bg: 142 40% 10%;
-    --users-icon: 142 71% 45%;
+    --surface-1: 230 16% 13%;
+    --surface-2: 186 30% 12%;
+    --surface-3: 32 40% 13%;
+    --surface-4: 300 26% 14%;
 
-    --orders-bg: 45 50% 10%;
-    --orders-icon: 45 93% 47%;
+    --accent-1: 32 100% 58%;
+    --accent-2: 186 100% 50%;
+    --accent-3: 300 90% 60%;
+    --accent-4: 32 95% 62%;
 
-    --conversion-bg: 262 40% 12%;
-    --conversion-icon: 262 83% 58%;
+    --success: 152 58% 46%;
+    --warning: 32 95% 60%;
+    --danger: 356 82% 62%;
 
-    --success: 142 71% 45%;
-    --warning: 45 93% 47%;
-    --danger: 0 84.2% 60.2%;
+    --sidebar-background: 230 22% 6%;
+    --sidebar-foreground: 230 20% 96%;
+    --sidebar-primary: 230 20% 96%;
+    --sidebar-primary-foreground: 230 22% 5%;
+    --sidebar-accent: 230 16% 14%;
+    --sidebar-accent-foreground: 230 20% 96%;
+    --sidebar-border: 230 16% 16%;
+    --sidebar-ring: 186 100% 50%;
 
-    --sidebar-background: 24 6% 8%;
-    --sidebar-foreground: 40 6% 90%;
-    --sidebar-primary: 210 20% 95%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 24 5% 14%;
-    --sidebar-accent-foreground: 40 6% 90%;
-    --sidebar-border: 24 5% 16%;
-    --sidebar-ring: 263 70% 58%;
+    --shadow-sm: 0 1px 2px -1px hsl(0 0% 0% / 0.5);
+    --shadow-md: 0 4px 14px -2px hsl(0 0% 0% / 0.55);
+    --shadow-lg: 0 24px 48px -12px hsl(0 0% 0% / 0.7);
+
+    --aurora-opacity: 0.75;
+    --aurora-blur: 90px;
   }
 }
 
@@ -130,7 +148,145 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-family: theme("fontFamily.sans");
+    background-image: radial-gradient(
+      120% 80% at 50% -10%,
+      hsl(var(--primary) / 0.06),
+      transparent 60%
+    );
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.28);
+    color: hsl(var(--foreground));
+  }
+
+  .tabular-nums,
+  [class*="font-mono"] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+}
+
+/* ==========================================================================
+   AURORA — the atmosphere layer
+   Three heavily blurred radial washes on a slow rotation. This is what finally
+   gives the existing `bg-card/50 backdrop-blur` cards something to blur.
+   ========================================================================== */
+
+@layer components {
+  .aurora-field {
+    position: absolute;
+    inset: -20%;
+    z-index: 0;
+    pointer-events: none;
+    filter: blur(var(--aurora-blur));
+    opacity: var(--aurora-opacity);
+    background:
+      radial-gradient(38% 38% at 18% 24%, hsl(var(--accent-1) / 0.55), transparent 70%),
+      radial-gradient(42% 42% at 78% 30%, hsl(var(--accent-2) / 0.5), transparent 70%),
+      radial-gradient(46% 46% at 52% 78%, hsl(var(--accent-3) / 0.4), transparent 72%);
+    animation: aurora-drift 40s linear infinite;
+    will-change: transform;
+  }
+
+  /* Film grain — kills banding in the blur, sits above the aurora */
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.22;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .glass {
+    @apply border border-border/60 bg-card/50 backdrop-blur-xl;
+    box-shadow: var(--shadow-md), inset 0 1px 0 0 hsl(0 0% 100% / 0.06);
+  }
+
+  .glass-hover {
+    @apply transition-all duration-300;
+  }
+
+  .glass-hover:hover {
+    @apply -translate-y-0.5 border-primary/30;
+    box-shadow: var(--shadow-lg), inset 0 1px 0 0 hsl(0 0% 100% / 0.1);
+  }
+
+  .page-shell {
+    @apply relative isolate;
+  }
+
+  .page-shell > * {
+    @apply relative z-10;
+  }
+
+  .hover-scale {
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+  }
+  .hover-scale:hover {
+    transform: translateY(-2px) scale(1.01);
+  }
+}
+
+/* Staggered page-load reveal — apply to a container, cascades to children */
+@layer components {
+  .stagger > * {
+    animation: fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+  .stagger > *:nth-child(1) { animation-delay: 0.02s; }
+  .stagger > *:nth-child(2) { animation-delay: 0.08s; }
+  .stagger > *:nth-child(3) { animation-delay: 0.14s; }
+  .stagger > *:nth-child(4) { animation-delay: 0.2s; }
+  .stagger > *:nth-child(5) { animation-delay: 0.26s; }
+  .stagger > *:nth-child(6) { animation-delay: 0.32s; }
+  .stagger > *:nth-child(n + 7) { animation-delay: 0.38s; }
+}
+
+@keyframes aurora-drift {
+  0%   { transform: rotate(0deg) scale(1); }
+  50%  { transform: rotate(180deg) scale(1.12); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(14px); filter: blur(6px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* Respect the user. The aurora is the most expensive thing we render. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .aurora-field {
+    animation: none;
+    transform: none;
   }
 }

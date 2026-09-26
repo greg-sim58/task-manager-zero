@@ -10,11 +10,7 @@ import {
   Plus,
   FileText,
   CalendarIcon,
-  Cpu,
-  Wifi,
-  HardDrive,
   Cloud,
-  Search,
   MapPin,
   Loader2
 } from "lucide-react";
@@ -434,26 +430,25 @@ export default function Dashboard() {
       {/* Greeting Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">
-            {greeting}, {userName.toUpperCase()}
+          <h1 className="font-display text-4xl font-bold tracking-tight mb-2">
+            {greeting}, {userName}
           </h1>
-          <p className="text-sm text-muted-foreground flex items-center gap-2">
+          <p className="text-sm text-muted-foreground font-mono tracking-wide flex items-center gap-2">
             <CalendarIcon className="h-4 w-4" />
-            {format(currentDateTime, "EEEE, MMM d")} • {format(currentDateTime, "HH:mm")}
+            {format(currentDateTime, "EEEE, MMM d")}
           </p>
         </div>
-        <Badge variant="outline" className="flex items-center gap-1 px-3 py-1">
-          <Search className="h-3 w-3" />
-          Cmd+K
+        <Badge variant="outline" className="flex items-center gap-1 px-3 py-1 font-mono text-xs">
+          {format(currentDateTime, "HH:mm")}
         </Badge>
       </div>
 
       {/* Bento Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-        {/* Row 1: Tasks (Quick Notes), Today, System Widgets */}
-        <Card className="md:col-span-4 bg-card/50 backdrop-blur">
+      <div className="stagger grid grid-cols-1 md:grid-cols-12 gap-4">
+        {/* Row 1: Tasks (Quick Notes), Today, Local Weather */}
+        <Card className="glass glass-hover md:col-span-4">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CardTitle className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70 flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Tasks
             </CardTitle>
@@ -489,9 +484,9 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-4 bg-card/50 backdrop-blur">
+        <Card className="glass glass-hover md:col-span-4">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Today</CardTitle>
+            <CardTitle className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Today</CardTitle>
             <CalendarIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-3">
@@ -515,60 +510,37 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <div className="md:col-span-4 grid grid-cols-2 gap-4">
-          <Card className="bg-card/50 backdrop-blur">
-            <CardContent className="p-4 flex flex-col items-center justify-center h-full">
-              <Cpu className="h-6 w-6 mb-2 text-primary" />
-              <div className="text-2xl font-bold">12%</div>
-              <div className="text-xs text-muted-foreground">CPU LOAD</div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card/50 backdrop-blur">
-            <CardContent className="p-4 flex flex-col items-center justify-center h-full">
-              <Wifi className="h-6 w-6 mb-2 text-green-500" />
-              <div className="text-2xl font-bold">1.2</div>
-              <div className="text-xs text-muted-foreground">GB/s DOWN</div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card/50 backdrop-blur">
-            <CardContent className="p-4 flex flex-col items-center justify-center h-full">
-              <HardDrive className="h-6 w-6 mb-2 text-orange-500" />
-              <div className="text-sm font-medium">SSD Status</div>
-              <div className="text-xs text-muted-foreground">Healthy • 240GB Free</div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card/50 backdrop-blur">
-            <CardContent className="p-4 flex flex-col items-center justify-center h-full">
-              {weather.loading ? (
-                <>
-                  <Loader2 className="h-6 w-6 mb-2 text-blue-400 animate-spin" />
-                  <div className="text-xs text-muted-foreground">Loading...</div>
-                </>
-              ) : weather.error ? (
-                <>
-                  <MapPin className="h-6 w-6 mb-2 text-red-400" />
-                  <div className="text-xs text-muted-foreground text-center">{weather.error}</div>
-                </>
-              ) : (
-                <>
-                  <Cloud className="h-6 w-6 mb-2 text-blue-400" />
-                  <div className="text-2xl font-bold">{weather.temperature}°</div>
-                  <div className="text-xs text-muted-foreground flex items-center gap-1">
-                    {weather.condition}, {weather.location}
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="glass glass-hover md:col-span-4">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Local Weather</CardTitle>
+            <Cloud className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="flex items-center justify-center min-h-[140px]">
+            {weather.loading ? (
+              <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <div className="text-xs">Loading...</div>
+              </div>
+            ) : weather.error ? (
+              <div className="flex flex-col items-center justify-center gap-2 text-center">
+                <MapPin className="h-6 w-6 text-destructive" />
+                <div className="text-xs text-muted-foreground max-w-[180px]">{weather.error}</div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center">
+                <div className="text-4xl font-bold tabular-nums tracking-tight">{weather.temperature}°</div>
+                <div className="mt-1 text-xs text-muted-foreground flex items-center gap-1">
+                  {weather.condition}, {weather.location}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Row 2: Metal Prices, Active Sprints */}
-        <Card className="md:col-span-4 bg-card/50 backdrop-blur flex flex-col">
+        <Card className="glass glass-hover md:col-span-4 flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Precious Metals</CardTitle>
+            <CardTitle className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Precious Metals</CardTitle>
             <span className="text-xs text-muted-foreground">{metalPrices?.currency || "USD"} / {metalPrices?.unit || "toz"}</span>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col justify-center space-y-4 pt-2 pb-6">
@@ -598,10 +570,10 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-8 bg-card/50 backdrop-blur">
+        <Card className="glass glass-hover md:col-span-8">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Active Sprints</CardTitle>
-            <span className="text-xs text-muted-foreground">UPDATED 4M AGO</span>
+            <CardTitle className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Active Sprints</CardTitle>
+            <span className="text-xs text-muted-foreground">Live</span>
           </CardHeader>
           <CardContent className="space-y-4">
             {taskProgress.length > 0 ? (

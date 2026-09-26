@@ -101,66 +101,97 @@ export default function Auth() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <span className="text-xl font-bold">T</span>
-            </div>
-            <span className="text-2xl font-bold">Task Zero</span>
+    <div className="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <div className="aurora-field" />
+        <div className="grain absolute inset-0" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-md">
+        {/* Brand lockup */}
+        <div className="mb-8 flex flex-col items-center text-center">
+          <div className="relative mb-5 flex h-14 w-14 items-center justify-center overflow-hidden rounded-[calc(var(--radius)-2px)] bg-gradient-to-br from-primary via-primary to-primary-2 shadow-glow">
+            <span className="font-display text-3xl font-bold leading-none text-primary-foreground">
+              0
+            </span>
           </div>
-          <CardTitle className="text-2xl">
-            {isLogin ? "Welcome back" : "Create an account"}
-          </CardTitle>
-          <CardDescription>
-            {isLogin
-              ? "Enter your credentials to access your account"
-              : "Enter your email and password to get started"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleAuth} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
-            </Button>
-          </form>
-          <div className="mt-4 text-center text-sm">
-            <button
-              type="button"
-              className="text-primary hover:underline"
-              onClick={() => setIsLogin(!isLogin)}
-            >
-              {isLogin
-                ? "Don't have an account? Sign up"
-                : "Already have an account? Sign in"}
-            </button>
-          </div>
-        </CardContent>
-      </Card>
+          <h1 className="font-display text-5xl font-bold tracking-tight">Task Zero</h1>
+          <p className="mt-3 max-w-xs font-mono text-xs uppercase leading-relaxed tracking-widest text-muted-foreground/70">
+            Every task, project and note — one workspace
+          </p>
+        </div>
+
+        <div className="glass relative rounded-[var(--radius)] p-px">
+          {/* Animated gradient hairline around the card */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -inset-px rounded-[calc(var(--radius)+1px)] bg-gradient-to-br from-primary/60 via-primary-2/40 to-transparent opacity-70"
+          />
+          <Card className="relative border-0 bg-background/80 shadow-none backdrop-blur-2xl">
+            <CardHeader className="space-y-1.5">
+              <CardTitle className="font-display text-2xl font-bold tracking-tight">
+                {isLogin ? "Welcome back" : "Create an account"}
+              </CardTitle>
+              <CardDescription>
+                {isLogin
+                  ? "Enter your credentials to access your workspace"
+                  : "Enter your email and password to get started"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleAuth} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    autoComplete={isLogin ? "current-password" : "new-password"}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="h-11 w-full rounded-[var(--radius)] bg-gradient-to-r from-primary to-primary-2 font-semibold shadow-glow transition-transform hover:scale-[1.01] active:scale-[0.99]"
+                  disabled={loading}
+                >
+                  {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
+                </Button>
+              </form>
+              <div className="mt-6 text-center text-sm">
+                <button
+                  type="button"
+                  className="font-medium text-primary underline-offset-4 transition-colors hover:text-primary/80 hover:underline"
+                  onClick={() => setIsLogin(!isLogin)}
+                >
+                  {isLogin
+                    ? "Don't have an account? Sign up"
+                    : "Already have an account? Sign in"}
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <p className="mt-8 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground/40">
+          Built for focused work
+        </p>
+      </div>
     </div>
   );
 }

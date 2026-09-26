@@ -218,7 +218,7 @@ export default function Tasks() {
       <main className="flex-1 overflow-y-auto px-8 py-8 space-y-8 bg-background">
         <div className="w-full space-y-8">
           <div className="flex items-center justify-between">
-            <h1 className="text-4xl font-bold tracking-tight">{activeFilter}</h1>
+            <h1 className="font-display text-4xl font-bold tracking-tight">{activeFilter}</h1>
           </div>
 
           <form onSubmit={handleCreateTask} className="relative group">

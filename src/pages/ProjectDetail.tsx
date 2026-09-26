@@ -249,7 +249,7 @@ export default function ProjectDetail() {
               <span
                 className={cn("h-3.5 w-3.5 rounded-full shrink-0", project.color || "bg-primary")}
               />
-              <h1 className="text-3xl font-bold tracking-tight truncate">{project.name}</h1>
+              <h1 className="font-display text-4xl font-bold tracking-tight truncate">{project.name}</h1>
               <Badge
                 variant="outline"
                 className={cn("shrink-0 text-[10px] uppercase", STATUS_STYLES[project.status])}

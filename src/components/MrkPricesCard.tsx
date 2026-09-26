@@ -58,10 +58,10 @@ export function MrkPricesCard() {
     const errorMessage = error?.message;
 
     return (
-        <Card className="hover-scale transition-all hover:shadow-lg bg-card/50 backdrop-blur w-full h-full flex flex-col">
+        <Card className="glass glass-hover w-full h-full flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-lg font-bold">MRK Precious Metals</CardTitle>
-                <span className="text-xs text-muted-foreground">ZAR / coin</span>
+                <CardTitle className="font-display text-2xl font-bold tracking-tight">MRK Precious Metals</CardTitle>
+                <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70">ZAR / coin</span>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col justify-center space-y-4 pt-4 pb-6">
                 {isLoading && metalPrices.length === 0 ? (

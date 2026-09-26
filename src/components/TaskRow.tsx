@@ -1,5 +1,4 @@
 import { ChevronRight, ChevronDown, Circle, CheckCircle2, Calendar, Trash2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -29,10 +28,16 @@ interface TaskRowProps {
     onDelete?: (task: Task) => void;
 }
 
-const priorityColors = {
-    low: "bg-[hsl(var(--users-bg))] text-[hsl(var(--users-icon))] border-none",
-    medium: "bg-[hsl(var(--orders-bg))] text-[hsl(var(--orders-icon))] border-none",
-    high: "bg-destructive/10 text-destructive border-none",
+const priorityRail = {
+    low: "bg-[hsl(var(--accent-2))]",
+    medium: "bg-[hsl(var(--accent-4))]",
+    high: "bg-destructive",
+};
+
+const priorityText = {
+    low: "text-[hsl(var(--accent-2))]",
+    medium: "text-[hsl(var(--accent-4))]",
+    high: "text-destructive",
 };
 
 export function TaskRow({
@@ -52,11 +57,21 @@ export function TaskRow({
         <div className="flex flex-col w-full">
             <div
                 className={cn(
-                    "group flex items-center py-3 px-4 hover:bg-accent/50 transition-colors cursor-pointer border border-border/50 bg-card rounded-[var(--radius)] shadow-sm",
+                    "group relative flex items-center py-3 pl-4 pr-4 hover:bg-accent/40 transition-colors cursor-pointer",
                     level > 0 && "ml-8"
                 )}
                 onClick={() => onSelectTask(task)}
             >
+                {/* Priority rail — a glowing edge instead of a filled badge */}
+                <span
+                    aria-hidden
+                    className={cn(
+                        "absolute inset-y-2 left-0 w-[3px] rounded-full transition-all duration-300",
+                        priorityRail[task.priority],
+                        isDone ? "opacity-30" : "opacity-100"
+                    )}
+                />
+
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className="flex items-center w-6 justify-center">
                         {hasSubtasks && (
@@ -65,7 +80,8 @@ export function TaskRow({
                                     e.stopPropagation();
                                     onToggleExpand?.();
                                 }}
-                                className="hover:bg-accent p-0.5 rounded transition-colors"
+                                aria-label={isExpanded ? "Collapse subtasks" : "Expand subtasks"}
+                                className="p-0.5 rounded transition-transform duration-200 hover:bg-accent"
                             >
                                 {isExpanded ? (
                                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -81,12 +97,13 @@ export function TaskRow({
                             e.stopPropagation();
                             onToggleStatus(task);
                         }}
-                        className="flex-shrink-0"
+                        aria-label={isDone ? `Mark "${task.title}" as not done` : `Mark "${task.title}" as done`}
+                        className="flex-shrink-0 transition-transform duration-200 active:scale-90"
                     >
                         {isDone ? (
                             <CheckCircle2 className="h-5 w-5 text-primary" />
                         ) : (
-                            <Circle className="h-5 w-5 text-muted-foreground" />
+                            <Circle className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary-2" />
                         )}
                     </button>
 
@@ -99,19 +116,25 @@ export function TaskRow({
                         >
                             {task.title}
                         </span>
-                        <div className="flex items-center gap-3 mt-0.5">
-                            <Badge className={cn("text-[10px] px-1.5 py-0 h-4 uppercase tracking-wider", priorityColors[task.priority])}>
+                        <div className="flex items-center gap-3 mt-1">
+                            <span
+                                className={cn(
+                                    "font-mono text-[10px] font-semibold uppercase tracking-widest",
+                                    isDone && "opacity-50",
+                                    priorityText[task.priority]
+                                )}
+                            >
                                 {task.priority}
-                            </Badge>
+                            </span>
                             {task.due_date && (
-                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                <div className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground">
                                     <Calendar className="h-3 w-3" />
                                     {format(new Date(task.due_date), "MMM dd")}
                                 </div>
                             )}
                             {hasSubtasks && (
-                                <span className="text-[10px] text-muted-foreground">
-                                    {subtasks.length} Sub Tasks
+                                <span className="font-mono text-[10px] text-muted-foreground">
+                                    {subtasks.length} subtask{subtasks.length === 1 ? "" : "s"}
                                 </span>
                             )}
                         </div>
@@ -125,7 +148,7 @@ export function TaskRow({
                             e.stopPropagation();
                             onDelete(task);
                         }}
-                        className="ml-3 flex-shrink-0 h-8 w-8 inline-flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        className="ml-3 flex-shrink-0 h-8 w-8 inline-flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                         aria-label="Delete task"
                     >
                         <Trash2 className="h-4 w-4" />
@@ -134,7 +157,7 @@ export function TaskRow({
             </div>
 
             {hasSubtasks && isExpanded && (
-                <div className="flex flex-col gap-1 mt-1">
+                <div className="flex flex-col mt-1 divide-y divide-border/40">
                     {subtasks.map((subtask) => (
                         <TaskRow
                             key={subtask.id}

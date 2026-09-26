@@ -76,7 +76,7 @@ export function RecentActivity() {
 
           {tasks.map((task) => (
             <div key={`task-${task.id}`} className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--warning-bg))]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--surface-1))]">
                 <CheckSquare className="h-5 w-5 text-[hsl(var(--warning))]" />
               </div>
               <div className="flex-1">
@@ -90,8 +90,8 @@ export function RecentActivity() {
 
           {events.map((event) => (
             <div key={`event-${event.id}`} className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--users-bg))]">
-                <CalendarIcon className="h-5 w-5 text-[hsl(var(--users-icon))]" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--surface-2))]">
+                <CalendarIcon className="h-5 w-5 text-[hsl(var(--accent-2))]" />
               </div>
               <div className="flex-1">
                 <p className="text-sm font-medium">{event.title}</p>
