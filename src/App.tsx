@@ -16,6 +16,7 @@ import Settings from "./pages/Settings";
 import Support from "./pages/Support";
 import Auth from "./pages/Auth";
 import Notes from "./pages/Notes";
+import TaxTools from "./pages/TaxTools";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/notes" element={<Notes />} />
               <Route path="/tools" element={<Tools />} />
+              <Route path="/tax-tools" element={<TaxTools />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/settings" element={<Settings />} />

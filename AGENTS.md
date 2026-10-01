@@ -9,6 +9,8 @@ npm run dev          # Vite dev server on port 8080 (host "::")
 npm run build        # ⚠️ runs scripts/bump-version.mjs FIRST, then vite build
 npm run build:dev    # same — bumps version, builds in development mode
 npm run lint         # ESLint (flat config, `eslint .`)
+npm run test         # Vitest, single run
+npm run test:watch   # Vitest, watch mode
 npm run preview      # serve dist/
 ```
 
@@ -20,9 +22,16 @@ npm run preview      # serve dist/
 
 So a successful build always leaves a modified `package.json` and `src/lib/version.ts` in your working tree. Do not commit those accidentally, and don't manually edit `src/lib/version.ts` — it is generated.
 
-### No test framework
+### Tests
 
-No test scripts, no runner, no test files. If adding tests, pick Vitest (already Vite-native) and wire it into `vite.config.ts`.
+Vitest, added for the SARS tax engine. Run with `npm run test`. There is no browser/DOM environment configured — the suite is pure functions only, so add `@vitest/browser` or `jsdom` before writing anything that renders.
+
+`src/lib/sarsTax.test.ts` guards the tax maths with structural invariants, not just example outputs. **If you edit the SARS tables, these are what catch you:**
+- bracket bases must equal tax derived from the bands below (catches a mistyped threshold)
+- tax must be continuous across every bracket boundary (catches a wrong band formula)
+- `threshold * 18% == rebate` for each age band (proves rebates come off tax, not income)
+
+Those three catch the two mistakes actually made when this was first written: stale brackets and `base + rate * income` instead of `base + rate * (income - floor)`.
 
 ## Tech stack (versions that matter)
 
@@ -69,8 +78,24 @@ All tables have RLS restricting CRUD to `auth.uid() = user_id`.
 - **tasks**: id, user_id, title, description, status (`todo` | `in_progress` | `done`), priority (`low` | `medium` | `high`), due_date, created_at, updated_at, parent_id, position, ai_generated, **project_id** (nullable FK to projects, `ON DELETE SET NULL`)
 - **projects**: id, user_id, name, description, status (`active` | `on_hold` | `completed` | `archived`), color, due_date, position, created_at, updated_at
 - **events**: id, user_id, title, date, time, duration, category, color, recurrence fields, parent_event_id. Queried live by `Calendar.tsx` and `RecentActivity.tsx`.
-- **notes**: id, user_id, title, body, created_at, updated_at. **Not yet in `types.ts`** — `Notes.tsx` defines a local `Note` interface instead. Regenerate types after the remote schema catches up.
-- **profiles**: user_id (PK → auth.users), notes_key, created_at, updated_at. Per-user settings; also missing from `types.ts`.
+- **notes**: id, user_id, title, body, created_at, updated_at. **Not in `types.ts`** — `Notes.tsx` defines a local `Note` interface (with client-only `icon?`/`color?` fields). Regenerate types after the remote schema catches up.
+- **profiles**: `notes_key`, created_at, updated_at. Per-user settings; also missing from `types.ts`.
+
+#### ⚠️ `profiles` primary key drift
+
+Two different PK names coexist for the same table. Check before writing any `profiles` query:
+
+- `supabase/migrations/20260820120000_create_notes.sql` creates it with **`user_id`** as PK.
+- `supabase/fix_notes.sql` is defensive: it creates with **`id`** PK if the table is missing, and detects whichever column is actually the PK (`pg_index.indisprimary`) when writing RLS policies.
+- `src/lib/notesGate.ts` **queries `.eq("id", userId)`** — the app code follows the `id` convention.
+
+Practical rule: match whatever `profiles` queries already do (`.eq("id", ...)`) unless you're deliberately aligning the two files. Don't "fix" one side in isolation — the column name is environment-dependent.
+
+### Edge Functions
+
+`supabase/functions/get-mrk-prices/index.ts` — Deno function that proxies the MRK (mrk.co.za) WooCommerce store API and returns the raw product array. Invoked from the client via `supabase.functions.invoke('get-mrk-prices')` in `src/components/MrkPricesCard.tsx`, which then maps products to metal symbols and divides `prices.price` by 100 (cents). Cached with TanStack Query under key `['mrk-prices']`, `refetchInterval: 300000`.
+
+Deploy with `supabase functions deploy get-mrk-prices`; local dev needs `supabase start`. Note this function makes a third-party HTTP call, so it fails closed if MRK is unreachable.
 
 ### Standard patterns
 
@@ -106,18 +131,28 @@ RLS is enabled on all tables. If inserts fail with `new row violates row-level s
 - `src/App.tsx` — providers (QueryClient, ThemeProvider, TooltipProvider, Toaster, Sonner) + routes. Auth route is outside `DashboardLayout`; everything else is inside it.
 - `src/components/DashboardLayout.tsx` — auth gate + `<Outlet />`. **Runs `assignOrphanTasks()` once per authenticated session** (guarded by a `useRef`), assigning any `project_id IS NULL` tasks to the user's "Unassigned" project (creating it if missing). See `src/lib/ensureUnassignedProject.ts`.
 - `src/pages/` — page components. Pages use `export default function PageName()`. Shared components use `export function ComponentName()`.
-- Routes: `/`, `/projects`, `/projects/:projectId`, `/tasks`, `/notes`, `/tools`, `/reports`, `/calendar`, `/settings`, `/support`, `/auth`, `*` (NotFound).
-- **Notes page gate**: `Notes.tsx` redirects to `/tools` unless `sessionStorage.getItem("notes-unlocked") === "1"` — the unlock flow lives in `Tools.tsx`.
+- Routes: `/`, `/projects`, `/projects/:projectId`, `/tasks`, `/notes`, `/tools`, `/tax-tools`, `/reports`, `/calendar`, `/settings`, `/support`, `/auth`, `*` (NotFound).
+- **`/tax-tools`** — self-contained monthly income tax estimator (no third-party embed). The Tax Tools card on `/tools` navigates here. Pairs with `src/lib/sarsTax.ts`.
+- **Notes page gate**: `/notes` redirects to `/tools` unless `sessionStorage.getItem("notes-unlocked") === "1"`. `Tools.tsx` renders a `NotesGateDialog` and sets that flag after `verifyNotesKey()` passes against `profiles.notes_key`. The flag is per-tab and clears on tab close; there is no server-side session gate on `/notes` itself.
+- Notes are full CRUD with a Markdown editor (Write/Preview), rendered Markdown on the cards, and an `AlertDialog` confirm before delete (`AlertDialogAction` calls `preventDefault()` to keep the dialog open during the async delete).
 - New tasks created from `/tasks` (Tasks.tsx) default to the "Unassigned" project via `ensureUnassignedProject()`. Tasks created from `ProjectDetail.tsx` get the explicit `project_id` of that project.
 
 ## Environment
 
-Required in `.env` (Vite format, `VITE_` prefix):
+Required in `.env` (Vite format, `VITE_` prefix). `.env.example` is committed and documents all four variables:
+
 ```
 VITE_SUPABASE_URL=...
-VITE_SUPABASE_PUBLISHABLE_KEY=...
+VITE_SUPABASE_ANON_KEY=...          # the one client.ts actually reads
+VITE_SUPABASE_PUBLISHABLE_KEY=...   # newer name for the same credential
+VITE_SUPABASE_PROJECT_ID=...
 ```
-No `.env.example` is committed. `.env` is gitignored.
+
+`src/integrations/supabase/client.ts` reads only `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. If you ever rename `ANON_KEY` → `PUBLISHABLE_KEY`, update that generated file too, or the client breaks.
+
+**Security posture:** the anon/publishable key is *designed* to ship in the client bundle — it is not a secret, and RLS is the actual access control. The `service_role` key must never be placed in `.env` or any `VITE_`-prefixed variable.
+
+**Git:** `.env` was tracked in git until this change; it is now untracked and ignored (`.gitignore` `.env` / `.env.*` with `!.env.example`). Note this only removes it going forward — the value remains in **git history**. Rotate the key if that matters to you.
 
 ## ESLint
 
@@ -132,13 +167,38 @@ No Prettier configured. The lint output currently contains pre-existing `no-expl
 - `npm run lint` runs ESLint (flat config in `eslint.config.js`).
 - There is no `tsc` script and no `typecheck` script — type errors surface via the editor LSP or `npm run build`.
 
+## `src/lib/` helpers
+
+Reusable logic lives here rather than inline in pages. Check this directory before re-deriving something.
+
+- **`utils.ts`** — `cn()` (clsx + tailwind-merge). The standard way to do conditional Tailwind classes.
+- **`validationSchemas.ts`** — Zod schemas `taskSchema`, `projectSchema`, `eventSchema`, `authSchema`, consumed via `@hookform/resolvers/zod` in React Hook Form forms. Add field validation here rather than inline in a component.
+- **`errorLogger.ts`** — `logError(context, error)`. Logs full detail in dev, only the context string in production. **Prefer this over raw `console.error`** in new code so you don't leak payloads in prod builds.
+- **`ensureUnassignedProject.ts`** — `ensureUnassignedProject(userId)` and `assignOrphanTasks(userId)`. Both catch internally, `console.error`, and return `null`/`0` — they never throw. Callers must check the return value.
+- **`notesGate.ts`** — `verifyNotesKey`, `setNotesKey`, `hasNotesKey` against `profiles.notes_key`. `NOTES_KEY_PATTERN` = `/^[A-Za-z0-9]{4,}$/`. Note it queries `profiles` by **`id`**, not `user_id` (see PK drift above).
+- **`noteIcons.ts`** — `hashString` (djb2) and `assignNoteIcons`. Icon selection is **deterministic from `note.id`**, so a given note always gets the same emoji.
+- **`noteColors.ts`** — `NOTE_COLORS` (50-entry teal→purple→amber palette) and `assignNoteColors`, also keyed off `hashString(note.id)`. Icons and colors are assigned client-side for display only; they are **not persisted to the DB**.
+- **`sarsTax.ts`** — SARS income tax engine. **Read the header comment before editing any figure**: rates are pinned to a tax year with a verification date, and the tables change every February. Bracket `base` values are derived from the bands below rather than hand-typed, so a mistyped threshold can't leave a stale base. Two entry points: `calculateIncomeTax` (annual) and `calculateMonthlyTax` (projects `monthly × 12`, applies the annual brackets, divides by 12). **`calculateMonthlyTax` is not PAYE** — it is not year-to-date aware and will differ from a payslip, especially when earnings vary. Only employment income, no deductions — medical credits, retirement, donations, capital gains and provisional tax are deliberately absent and each needs its own verified table.
+- **`version.ts`** — generated; `APP_VERSION` rendered in the `DashboardLayout` header.
+
 ## Conventions worth knowing
 
 - `cn()` from `@/lib/utils` for conditional Tailwind classes (Tailwind-merge + clsx).
-- Local interfaces for component props, defined immediately above the component.
+- Local interfaces for component props, defined immediately above the component. When the shape is a DB row, the interface goes local too (see `Note` in `Notes.tsx`).
 - DB columns are `snake_case`; TS field names in `types.ts` mirror them.
 - Event handlers prefixed `handle*`; boolean state prefixed `is`/`has`.
 - Icons: named imports from `lucide-react`.
+- Dates: `date-fns` (`format`, …) plus `Intl.NumberFormat` for ZAR currency in `MrkPricesCard`.
+- Markdown: `react-markdown` + `remark-gfm`, wrapped by `src/components/Markdown.tsx` (renderer) and `src/components/MarkdownEditor.tsx` (Write/Preview tabs + toolbar). Use those components rather than importing `react-markdown` directly.
+
+## Repo layout gotcha
+
+`.kilo/worktrees/hurricane-second/` contains a **near-complete duplicate checkout of this repo** (its own `src/`, `package.json`, `.env`, etc.). It is untracked and now gitignored, but it is still on disk.
+
+Consequences:
+- Any tool that globs the tree (`grep -r`, file watchers, `rg` without an ignore rule) will return **duplicated results**.
+- When reading or editing files, scope paths to the repo root explicitly. If a search returns something that doesn't match what you read directly, you're probably seeing the worktree copy.
+- Don't edit files under `.kilo/worktrees/` — those changes belong to a separate checkout.
 
 ## When in doubt
 

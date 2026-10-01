@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# Local env files — never commit real credentials
+.env
+.env.*
+!.env.example
+
+# Kilo agent worktrees (duplicate checkouts, untracked by design)
+.kilo/worktrees/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

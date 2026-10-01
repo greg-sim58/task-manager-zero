@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText, StickyNote } from "lucide-react";
+import { Calculator, FileText, StickyNote } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NotesGateDialog } from "@/components/NotesGateDialog";
 
@@ -16,6 +16,11 @@ const tools = [
     icon: StickyNote,
     gated: true,
   },
+  {
+    title: "Tax Tools",
+    description: "Calculators and SARS filing helpers",
+    icon: Calculator,
+  },
 ];
 
 const NOTES_UNLOCK_KEY = "notes-unlocked";
@@ -30,6 +35,10 @@ export default function Tools() {
       return;
     }
     if (tool.title === "Documents") {
+      return;
+    }
+    if (tool.title === "Tax Tools") {
+      navigate("/tax-tools");
       return;
     }
   };
